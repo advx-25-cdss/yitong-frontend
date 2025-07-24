@@ -1,0 +1,31 @@
+# Next.js build output
+.next/
+out/
+
+# Node modules
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+
+# Misc
+coverage/
+dist/
+build/
