@@ -1,53 +1,92 @@
-import Link from "next/link";
+"use client";
 
-import { LatestPost } from "~/app/_components/post";
-import { api, HydrateClient } from "~/trpc/server";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Heart, Activity, Users, BarChart3 } from "lucide-react";
+import Dashboard from "~/components/Dashboard";
+import CDSSScreen from "~/components/CDSSScreen";
 
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
+export default function Home() {
+  const [currentScreen, setCurrentScreen] = useState<"dashboard" | "cdss">(
+    "cdss",
+  );
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
+    null,
+  );
 
-  void api.post.getLatest.prefetch();
+  const handlePatientSelect = (patientId: string) => {
+    setSelectedPatientId(patientId);
+    setCurrentScreen("cdss");
+  };
 
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <header className="border-b bg-white shadow-sm">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Heart className="h-8 w-8 text-red-500" />
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    心脑血管科 CDSS
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    Clinical Decision Support System
+                  </p>
+                </div>
               </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
-          </div>
+            </div>
 
-          <LatestPost />
+            <nav className="flex space-x-2">
+              <Button
+                variant={currentScreen === "dashboard" ? "default" : "outline"}
+                onClick={() => setCurrentScreen("dashboard")}
+                className="flex items-center space-x-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span>仪表板</span>
+              </Button>
+              <Button
+                variant={currentScreen === "cdss" ? "default" : "outline"}
+                onClick={() => setCurrentScreen("cdss")}
+                className="flex items-center space-x-2"
+                disabled={!selectedPatientId}
+              >
+                <Activity className="h-4 w-4" />
+                <span>CDSS系统</span>
+              </Button>
+            </nav>
+          </div>
         </div>
+      </header>
+
+      {/* Main Content */}
+      <main>
+        {currentScreen === "dashboard" && (
+          <Dashboard onPatientSelect={handlePatientSelect} />
+        )}
+        {currentScreen === "cdss" && selectedPatientId && <CDSSScreen />}
+        {currentScreen === "cdss" && !selectedPatientId && (
+          <div className="flex h-96 items-center justify-center">
+            <div className="text-center">
+              <Users className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                请选择患者
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                请从仪表板选择一个患者开始使用CDSS系统
+              </p>
+              <Button
+                onClick={() => setCurrentScreen("dashboard")}
+                className="mt-4"
+              >
+                返回仪表板
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
-    </HydrateClient>
+    </div>
   );
 }
