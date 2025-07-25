@@ -6,6 +6,13 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Badge } from "./ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import {
   Users,
   Activity,
   Clock,
@@ -79,16 +86,17 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
+    <div className="space-y-6 px-4 py-6">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">今日患者总数</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              今日患者总数
+            </CardTitle>
             <Users className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-3xl font-bold">
               {dashboardStats.totalPatients}
             </div>
             <p className="text-muted-foreground text-xs">+2 from yesterday</p>
@@ -97,11 +105,13 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">今日诊疗次数</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              今日诊疗次数
+            </CardTitle>
             <Activity className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-3xl font-bold">
               {dashboardStats.todayEncounters}
             </div>
             <p className="text-muted-foreground text-xs">+1 from yesterday</p>
@@ -110,11 +120,13 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">诊断准确率</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              诊断准确率
+            </CardTitle>
             <TrendingUp className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardStats.accuracy}%</div>
+            <div className="text-3xl font-bold">{dashboardStats.accuracy}%</div>
             <p className="text-muted-foreground text-xs">
               +1.2% from last week
             </p>
@@ -123,11 +135,13 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">平均响应时间</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              平均响应时间
+            </CardTitle>
             <Clock className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-3xl font-bold">
               {dashboardStats.avgResponseTime}
             </div>
             <p className="text-muted-foreground text-xs">
@@ -141,7 +155,7 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
       <Card>
         <CardHeader>
           <div className="flex flex-col items-start justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
-            <CardTitle className="text-lg font-semibold">
+            <CardTitle className="text-lg font-semibold text-gray-500">
               今日患者列表
             </CardTitle>
 
@@ -151,43 +165,29 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                 <Input
                   placeholder="搜索患者..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSearchTerm(e.target.value)
+                  }
                   className="w-full pl-8 sm:w-64"
                 />
               </div>
 
-              <div className="flex space-x-2">
-                <Button
-                  variant={statusFilter === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("all")}
-                >
-                  全部
-                </Button>
-                <Button
-                  variant={statusFilter === "open" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("open")}
-                >
-                  新建
-                </Button>
-                <Button
-                  variant={
-                    statusFilter === "in_progress" ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() => setStatusFilter("in_progress")}
-                >
-                  进行中
-                </Button>
-                <Button
-                  variant={statusFilter === "closed" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("closed")}
-                >
-                  已完成
-                </Button>
-              </div>
+              <Select
+                value={statusFilter}
+                onValueChange={(
+                  value: "all" | "open" | "in_progress" | "closed",
+                ) => setStatusFilter(value)}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="选择状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部</SelectItem>
+                  <SelectItem value="open">一诊</SelectItem>
+                  <SelectItem value="in_progress">复诊中</SelectItem>
+                  <SelectItem value="closed">已完成</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -199,10 +199,9 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                 <tr className="border-b">
                   <th className="px-4 py-3 text-left font-medium">患者信息</th>
                   <th className="px-4 py-3 text-left font-medium">主诉</th>
-                  <th className="px-4 py-3 text-left font-medium">生命体征</th>
                   <th className="px-4 py-3 text-left font-medium">优先级</th>
-                  <th className="px-4 py-3 text-left font-medium">状态</th>
                   <th className="px-4 py-3 text-left font-medium">就诊时间</th>
+                  <th className="px-4 py-3 text-left font-medium">状态</th>
                   <th className="px-4 py-3 text-left font-medium">操作</th>
                 </tr>
               </thead>
@@ -219,7 +218,7 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                       <td className="px-4 py-4">
                         <div className="flex items-center space-x-3">
                           <div className="flex-shrink-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-blue-400 to-blue-600">
                               <span className="text-sm font-medium text-white">
                                 {patient.demographics.first_name[0]}
                               </span>
@@ -227,11 +226,10 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">
-                              {patient.demographics.last_name}
                               {patient.demographics.first_name}
+                              {patient.demographics.last_name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {patient.demographics.patient_id} •{" "}
                               {patient.demographics.gender === "male"
                                 ? "男"
                                 : "女"}{" "}
@@ -259,22 +257,6 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="space-y-1 text-sm">
-                          <div className="flex items-center space-x-1">
-                            <Heart className="h-3 w-3 text-red-500" />
-                            <span>
-                              {latestVital?.blood_pressure_systolic}/
-                              {latestVital?.blood_pressure_diastolic}
-                            </span>
-                          </div>
-                          <div className="text-gray-500">
-                            HR: {latestVital?.heart_rate} • T:{" "}
-                            {latestVital?.temperature}°C
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
                         <Badge
                           className={getPriorityColor(
                             patient.historyPresentIllness?.severity,
@@ -284,18 +266,6 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                             patient.historyPresentIllness?.severity,
                           )}
                         </Badge>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        {latestCase && (
-                          <Badge className={getStatusColor(latestCase.status)}>
-                            {latestCase.status === "open"
-                              ? "新建"
-                              : latestCase.status === "in_progress"
-                                ? "进行中"
-                                : "已完成"}
-                          </Badge>
-                        )}
                       </td>
 
                       <td className="px-4 py-4">
@@ -315,6 +285,18 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                               })}
                             </div>
                           </>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        {latestCase && (
+                          <Badge className={getStatusColor(latestCase.status)}>
+                            {latestCase.status === "open"
+                              ? "一诊"
+                              : latestCase.status === "in_progress"
+                                ? "复诊中"
+                                : "已完成"}
+                          </Badge>
                         )}
                       </td>
 

@@ -65,6 +65,7 @@ export default function ChatInterface({
 
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedMode, setSelectedMode] = useState("诊断分析");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -198,15 +199,14 @@ export default function ChatInterface({
   };
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col overflow-auto bg-white">
       {/* Header */}
-      <div className="border-b bg-gradient-to-r from-indigo-50 to-purple-50 p-4">
+      <div className="border-b bg-gradient-to-r from-purple-50 to-blue-50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Brain className="h-5 w-5 text-indigo-600" />
             <div>
               <h3 className="font-semibold text-gray-900">CDSS 智能助手</h3>
-              <p className="text-sm text-gray-600">临床决策支持系统</p>
             </div>
           </div>
 
@@ -223,105 +223,92 @@ export default function ChatInterface({
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 pr-2 pl-3">
         <div className="space-y-4">
-          {messages.map((message) => (
-            <div key={message.id} className="space-y-2">
+          {messages.map((message, index) => {
+            const isDoctor = message.type === "user";
+            const isBot = message.type === "ai";
+            const isSystem = message.type === "system";
+
+            return (
               <div
-                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                key={message.id}
+                className={`space-y-2 ${index === 0 ? "pt-4" : ""}`}
               >
                 <div
-                  className={`flex max-w-[80%] items-start space-x-2 ${
-                    message.type === "user"
-                      ? "flex-row-reverse space-x-reverse"
-                      : ""
-                  }`}
+                  className={`flex ${isDoctor ? "justify-end" : "justify-start"}`}
                 >
-                  {/* Avatar */}
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                      message.type === "user"
-                        ? "bg-blue-600"
-                        : message.type === "system"
-                          ? "bg-gray-600"
-                          : "bg-gradient-to-r from-indigo-600 to-purple-600"
+                    className={`flex max-w-[80%] items-start space-x-2 ${
+                      isDoctor ? "flex-row-reverse space-x-reverse" : ""
                     }`}
                   >
-                    {message.type === "user" ? (
-                      <User className="h-4 w-4 text-white" />
-                    ) : message.type === "system" ? (
-                      <Activity className="h-4 w-4 text-white" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-white" />
-                    )}
-                  </div>
-
-                  {/* Message content */}
-                  <div
-                    className={`rounded-lg p-3 ${
-                      message.type === "user"
-                        ? "bg-blue-600 text-white"
-                        : message.type === "system"
-                          ? "bg-gray-100 text-gray-800"
-                          : `${getPriorityColor(message.priority)} border`
-                    }`}
-                  >
-                    <div className="flex items-start space-x-2">
-                      {message.type === "ai" && message.priority && (
-                        <div className="mt-0.5">
-                          {getPriorityIcon(message.priority)}
-                        </div>
+                    {/* Avatar */}
+                    <div
+                      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full ${
+                        isDoctor
+                          ? "bg-gray-100"
+                          : isBot
+                            ? "border border-gray-200 bg-white"
+                            : "bg-gray-600"
+                      }`}
+                    >
+                      {isDoctor ? (
+                        <User className="h-4 w-4 text-gray-700" />
+                      ) : isBot ? (
+                        <img
+                          src="/images/logo.png"
+                          alt="yitong"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Activity className="h-4 w-4 text-white" />
                       )}
-                      <div className="flex-1">
-                        <p className="text-sm whitespace-pre-wrap">
-                          {message.content}
-                        </p>
-                        <p className="mt-1 text-xs opacity-70">
-                          {message.timestamp.toLocaleTimeString("zh-CN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
+                    </div>
+
+                    {/* Message Content */}
+                    <div
+                      className={`rounded-lg p-3 ${
+                        isDoctor
+                          ? "bg-gray-100 text-gray-800"
+                          : isBot
+                            ? "border border-gray-100 bg-white text-gray-900"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
+                      style={{ minWidth: 0 }}
+                    >
+                      <div className="flex items-start space-x-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm break-words whitespace-pre-wrap">
+                            {message.content}
+                          </p>
+                          <p className="mt-1 text-xs opacity-70">
+                            {message.timestamp.toLocaleTimeString("zh-CN", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Suggestions */}
-              {message.suggestions && (
-                <div
-                  className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div className="ml-10 max-w-[80%]">
-                    <div className="flex flex-wrap gap-2">
-                      {message.suggestions.map((suggestion, index) => (
-                        <Button
-                          key={index}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSuggestionClick(suggestion)}
-                          className="border-blue-200 bg-white text-xs text-blue-700 hover:bg-blue-50"
-                        >
-                          <Sparkles className="mr-1 h-3 w-3" />
-                          {suggestion}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
 
           {/* Typing indicator */}
           {isTyping && (
             <div className="flex justify-start">
               <div className="flex max-w-[80%] items-start space-x-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-purple-600">
-                  <Bot className="h-4 w-4 text-white" />
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white">
+                  <img
+                    src="/images/logo.png"
+                    alt="Bot Logo"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
-                <div className="rounded-lg bg-gray-100 p-3">
+                <div className="rounded-lg border border-gray-100 bg-white p-3">
                   <div className="flex space-x-1">
                     <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400"></div>
                     <div
@@ -342,68 +329,110 @@ export default function ChatInterface({
         </div>
       </ScrollArea>
 
-      {/* Quick Actions */}
-      <div className="border-t border-b bg-gray-50 px-4 py-2">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleSuggestionClick("分析当前诊断的可能性")}
-            className="flex items-center space-x-1 text-xs"
-          >
-            <Stethoscope className="h-3 w-3" />
-            <span>诊断分析</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleSuggestionClick("推荐适合的治疗方案")}
-            className="flex items-center space-x-1 text-xs"
-          >
-            <Pill className="h-3 w-3" />
-            <span>治疗建议</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleSuggestionClick("建议需要的检查项目")}
-            className="flex items-center space-x-1 text-xs"
-          >
-            <TestTube className="h-3 w-3" />
-            <span>检查建议</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleSuggestionClick("评估患者预后和风险")}
-            className="flex items-center space-x-1 text-xs"
-          >
-            <Heart className="h-3 w-3" />
-            <span>风险评估</span>
-          </Button>
-        </div>
-      </div>
+      {/* Input Area */}
+      <div className="bg-white p-4">
+        {/* Outer Input Container */}
+        <div className="mb-3 rounded-lg border border-gray-300 bg-white p-3 focus-within:border-transparent focus-within:ring-1 focus-within:ring-gray-400">
+          {/* Text Input */}
+          <div className="mb-3">
+            <input
+              value={newMessage}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewMessage(e.target.value)
+              }
+              placeholder="询问CDSS助手关于诊断、治疗或检查的问题..."
+              onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                e.key === "Enter" && handleSendMessage()
+              }
+              className="w-full border-0 bg-transparent p-2 text-sm placeholder:text-gray-500 focus:border-0 focus:ring-0 focus:outline-none"
+            />
+          </div>
 
-      {/* Input */}
-      <div className="border-t p-4">
-        <div className="flex space-x-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="询问CDSS助手关于诊断、治疗或检查的问题..."
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            className="flex-1"
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() || isTyping}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          {/* Bottom Row: Mode Selection (Left) + Send Button (Right) */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedMode("诊断分析")}
+                className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
+                  selectedMode === "诊断分析"
+                    ? "cursor-default bg-gray-800 text-white"
+                    : "cursor-pointer bg-transparent text-gray-600"
+                }`}
+                tabIndex={selectedMode === "诊断分析" ? -1 : 0}
+                style={
+                  selectedMode === "诊断分析" ? { pointerEvents: "none" } : {}
+                }
+              >
+                <Stethoscope className="h-3 w-3" />
+                <span>诊断分析</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedMode("治疗建议")}
+                className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
+                  selectedMode === "治疗建议"
+                    ? "cursor-default bg-gray-800 text-white"
+                    : "cursor-pointer bg-transparent text-gray-600"
+                }`}
+                tabIndex={selectedMode === "治疗建议" ? -1 : 0}
+                style={
+                  selectedMode === "治疗建议" ? { pointerEvents: "none" } : {}
+                }
+              >
+                <Pill className="h-3 w-3" />
+                <span>治疗建议</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedMode("检查建议")}
+                className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
+                  selectedMode === "检查建议"
+                    ? "cursor-default bg-gray-800 text-white"
+                    : "cursor-pointer bg-transparent text-gray-600"
+                }`}
+                tabIndex={selectedMode === "检查建议" ? -1 : 0}
+                style={
+                  selectedMode === "检查建议" ? { pointerEvents: "none" } : {}
+                }
+              >
+                <TestTube className="h-3 w-3" />
+                <span>检查建议</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedMode("风险评估")}
+                className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
+                  selectedMode === "风险评估"
+                    ? "cursor-default bg-gray-800 text-white"
+                    : "cursor-pointer bg-transparent text-gray-600"
+                }`}
+                tabIndex={selectedMode === "风险评估" ? -1 : 0}
+                style={
+                  selectedMode === "风险评估" ? { pointerEvents: "none" } : {}
+                }
+              >
+                <Heart className="h-3 w-3" />
+                <span>风险评估</span>
+              </Button>
+            </div>
+
+            <Button
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim() || isTyping}
+              className="h-8 w-8 rounded-full bg-black px-4 text-white hover:bg-gray-800 disabled:bg-gray-300 flex content-center justify-center"
+            >
+              <Send className="mr-1 h-3 w-3" />
+            </Button>
+          </div>
         </div>
 
-        <div className="mt-2 text-center text-xs text-gray-500">
+        {/* Disclaimer */}
+        <div className="mt-0.5 text-center text-[12px] text-gray-400">
           CDSS助手可以协助您进行临床决策，但不能替代医生的专业判断
         </div>
       </div>

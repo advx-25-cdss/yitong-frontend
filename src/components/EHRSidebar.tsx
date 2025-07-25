@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -35,6 +35,69 @@ export default function EHRSidebar({
   onToggleCollapse,
 }: EHRSidebarProps) {
   const [activeSection, setActiveSection] = useState("demographics");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const demographicsRef = useRef<HTMLDivElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
+  const medicationsRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer to track active section
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const sectionId = entry.target.getAttribute("data-section");
+            if (sectionId) {
+              setActiveSection(sectionId);
+            }
+          }
+        });
+      },
+      {
+        root: scrollAreaRef.current?.querySelector(
+          "[data-radix-scroll-area-viewport]",
+        ),
+        rootMargin: "-20% 0px -70% 0px",
+        threshold: 0.1,
+      },
+    );
+
+    const sections = [
+      demographicsRef.current,
+      historyRef.current,
+      medicationsRef.current,
+    ];
+    sections.forEach((section) => {
+      if (section) {
+        observer.observe(section);
+      }
+    });
+
+    return () => {
+      sections.forEach((section) => {
+        if (section) {
+          observer.unobserve(section);
+        }
+      });
+    };
+  }, []);
+
+  const scrollToSection = (
+    sectionRef: React.RefObject<HTMLDivElement | null>,
+  ) => {
+    if (sectionRef.current && scrollAreaRef.current) {
+      const container = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = sectionRef.current.getBoundingClientRect();
+        const offset =
+          elementRect.top - containerRect.top + container.scrollTop;
+        container.scrollTo({ top: offset, behavior: "smooth" });
+      }
+    }
+  };
 
   if (collapsed) {
     return (
@@ -47,47 +110,11 @@ export default function EHRSidebar({
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
-
-        <div className="flex flex-col space-y-2">
-          <Button
-            variant={activeSection === "demographics" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveSection("demographics")}
-            className="h-8 w-8 p-0"
-          >
-            <User className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={activeSection === "vitals" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveSection("vitals")}
-            className="h-8 w-8 p-0"
-          >
-            <Activity className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={activeSection === "history" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveSection("history")}
-            className="h-8 w-8 p-0"
-          >
-            <FileText className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={activeSection === "medications" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveSection("medications")}
-            className="h-8 w-8 p-0"
-          >
-            <Pill className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
     );
   }
 
   const demographics = patient.demographics;
-  const latestVitals = patient.vitals[patient.vitals.length - 1];
   const age =
     new Date().getFullYear() -
     new Date(demographics.date_of_birth).getFullYear();
@@ -106,30 +133,29 @@ export default function EHRSidebar({
 
       {/* Navigation */}
       <div className="border-b bg-white p-2">
-        <div className="flex flex-wrap gap-1">
+        <div
+          className="scrollbar-hide flex gap-1 overflow-x-auto"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          <style jsx>{`
+            .scrollbar-hide::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
           <Button
             variant={activeSection === "demographics" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setActiveSection("demographics")}
-            className="flex items-center space-x-1"
+            onClick={() => scrollToSection(demographicsRef)}
+            className="flex items-center space-x-1 whitespace-nowrap"
           >
             <User className="h-3 w-3" />
             <span className="text-xs">基本信息</span>
           </Button>
           <Button
-            variant={activeSection === "vitals" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveSection("vitals")}
-            className="flex items-center space-x-1"
-          >
-            <Activity className="h-3 w-3" />
-            <span className="text-xs">生命体征</span>
-          </Button>
-          <Button
             variant={activeSection === "history" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setActiveSection("history")}
-            className="flex items-center space-x-1"
+            onClick={() => scrollToSection(historyRef)}
+            className="flex items-center space-x-1 whitespace-nowrap"
           >
             <FileText className="h-3 w-3" />
             <span className="text-xs">病史</span>
@@ -137,8 +163,8 @@ export default function EHRSidebar({
           <Button
             variant={activeSection === "medications" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setActiveSection("medications")}
-            className="flex items-center space-x-1"
+            onClick={() => scrollToSection(medicationsRef)}
+            className="flex items-center space-x-1 whitespace-nowrap"
           >
             <Pill className="h-3 w-3" />
             <span className="text-xs">用药</span>
@@ -146,185 +172,93 @@ export default function EHRSidebar({
         </div>
       </div>
 
-      {/* Content */}
-      <ScrollArea className="flex-1">
+      {/* Content - Single Scroll Area */}
+      <ScrollArea ref={scrollAreaRef} className="flex-1">
         <div className="space-y-4 p-4">
           {/* Demographics Section */}
-          {activeSection === "demographics" && (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center space-x-2 text-sm">
-                    <User className="h-4 w-4" />
-                    <span>基本信息</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-center">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
-                      <span className="text-lg font-bold text-white">
-                        {demographics.first_name[0]}
-                      </span>
-                    </div>
-                    <h3 className="mt-2 font-medium">
-                      {demographics.last_name}
-                      {demographics.first_name}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {demographics.patient_id}
-                    </p>
+          <div
+            ref={demographicsRef}
+            data-section="demographics"
+            className="space-y-4"
+          >
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center space-x-2 text-sm">
+                  <User className="h-4 w-4" />
+                  <span>基本信息</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-300 to-blue-500">
+                    <span className="text-lg font-bold text-white">
+                      {demographics.first_name[0]}
+                    </span>
                   </div>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">性别:</span>
-                      <span>
-                        {demographics.gender === "male" ? "男" : "女"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">年龄:</span>
-                      <span>{age}岁</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">出生日期:</span>
-                      <span>
-                        {new Date(
-                          demographics.date_of_birth,
-                        ).toLocaleDateString("zh-CN")}
-                      </span>
-                    </div>
-                  </div>
-
-                  {demographics.phone && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Phone className="h-3 w-3 text-gray-400" />
-                      <span>{demographics.phone}</span>
-                    </div>
-                  )}
-
-                  {demographics.address && (
-                    <div className="flex items-start space-x-2 text-sm">
-                      <MapPin className="mt-0.5 h-3 w-3 text-gray-400" />
-                      <span className="text-gray-600">
-                        {demographics.address}
-                      </span>
-                    </div>
-                  )}
-
-                  {demographics.emergency_contact_name && (
-                    <div className="border-t pt-2">
-                      <p className="mb-1 text-xs text-gray-500">紧急联系人</p>
-                      <p className="text-sm font-medium">
-                        {demographics.emergency_contact_name}
-                      </p>
-                      {demographics.emergency_contact_phone && (
-                        <p className="text-sm text-gray-600">
-                          {demographics.emergency_contact_phone}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Vitals Section */}
-          {activeSection === "vitals" && latestVitals && (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center space-x-2 text-sm">
-                    <Activity className="h-4 w-4" />
-                    <span>生命体征</span>
-                  </CardTitle>
-                  <p className="text-xs text-gray-500">
-                    {new Date(latestVitals.measurement_date).toLocaleString(
-                      "zh-CN",
-                    )}
+                  <h3 className="mt-2 font-medium">
+                    {demographics.first_name}
+                    {demographics.last_name}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {demographics.patient_id}
                   </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded bg-red-50 p-2 text-center">
-                      <Heart className="mx-auto mb-1 h-4 w-4 text-red-500" />
-                      <p className="text-xs text-gray-500">血压</p>
-                      <p className="text-sm font-medium">
-                        {latestVitals.blood_pressure_systolic}/
-                        {latestVitals.blood_pressure_diastolic}
-                      </p>
-                    </div>
-                    <div className="rounded bg-blue-50 p-2 text-center">
-                      <Activity className="mx-auto mb-1 h-4 w-4 text-blue-500" />
-                      <p className="text-xs text-gray-500">心率</p>
-                      <p className="text-sm font-medium">
-                        {latestVitals.heart_rate} bpm
-                      </p>
-                    </div>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">性别:</span>
+                    <span>{demographics.gender === "male" ? "男" : "女"}</span>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded bg-orange-50 p-2 text-center">
-                      <Thermometer className="mx-auto mb-1 h-4 w-4 text-orange-500" />
-                      <p className="text-xs text-gray-500">体温</p>
-                      <p className="text-sm font-medium">
-                        {latestVitals.temperature}°C
-                      </p>
-                    </div>
-                    <div className="rounded bg-green-50 p-2 text-center">
-                      <span className="mx-auto mb-1 block text-sm font-bold text-green-500">
-                        O₂
-                      </span>
-                      <p className="text-xs text-gray-500">血氧</p>
-                      <p className="text-sm font-medium">
-                        {latestVitals.oxygen_saturation}%
-                      </p>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">年龄:</span>
+                    <span>{age}岁</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">出生日期:</span>
+                    <span>
+                      {new Date(demographics.date_of_birth).toLocaleDateString(
+                        "zh-CN",
+                      )}
+                    </span>
+                  </div>
+                </div>
 
-                  {latestVitals.weight && latestVitals.height && (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded bg-purple-50 p-2 text-center">
-                        <Weight className="mx-auto mb-1 h-4 w-4 text-purple-500" />
-                        <p className="text-xs text-gray-500">体重</p>
-                        <p className="text-sm font-medium">
-                          {latestVitals.weight} kg
-                        </p>
-                      </div>
-                      <div className="rounded bg-indigo-50 p-2 text-center">
-                        <Ruler className="mx-auto mb-1 h-4 w-4 text-indigo-500" />
-                        <p className="text-xs text-gray-500">身高</p>
-                        <p className="text-sm font-medium">
-                          {latestVitals.height} cm
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                {demographics.phone && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Phone className="h-3 w-3 text-gray-400" />
+                    <span>{demographics.phone}</span>
+                  </div>
+                )}
 
-                  {latestVitals.bmi && (
-                    <div className="rounded bg-gray-50 p-2 text-center">
-                      <p className="text-xs text-gray-500">BMI</p>
-                      <p className="text-sm font-medium">{latestVitals.bmi}</p>
-                    </div>
-                  )}
+                {demographics.address && (
+                  <div className="flex items-start space-x-2 text-sm">
+                    <MapPin className="mt-0.5 h-3 w-3 text-gray-400" />
+                    <span className="text-gray-600">
+                      {demographics.address}
+                    </span>
+                  </div>
+                )}
 
-                  {latestVitals.notes && (
-                    <div className="border-t pt-2">
-                      <p className="mb-1 text-xs text-gray-500">备注</p>
-                      <p className="text-sm text-gray-700">
-                        {latestVitals.notes}
+                {demographics.emergency_contact_name && (
+                  <div className="border-t pt-2">
+                    <p className="mb-1 text-xs text-gray-500">紧急联系人</p>
+                    <p className="text-sm font-medium">
+                      {demographics.emergency_contact_name}
+                    </p>
+                    {demographics.emergency_contact_phone && (
+                      <p className="text-sm text-gray-600">
+                        {demographics.emergency_contact_phone}
                       </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {/* History Section */}
-          {activeSection === "history" && patient.historyPresentIllness && (
-            <div className="space-y-4">
+          {patient.historyPresentIllness && (
+            <div ref={historyRef} data-section="history" className="space-y-4">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center space-x-2 text-sm">
@@ -363,7 +297,7 @@ export default function EHRSidebar({
                       <p className="mb-1 text-xs text-gray-500">严重程度</p>
                       <div className="flex items-center space-x-2">
                         <div className="flex space-x-1">
-                          {[...Array(10)].map((_, i) => (
+                          {Array.from({ length: 10 }, (_, i) => (
                             <div
                               key={i}
                               className={`h-2 w-2 rounded-full ${
@@ -405,51 +339,35 @@ export default function EHRSidebar({
           )}
 
           {/* Medications Section */}
-          {activeSection === "medications" && (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center space-x-2 text-sm">
-                    <Pill className="h-4 w-4" />
-                    <span>当前用药</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {patient.medicines.length > 0 ? (
-                    <div className="space-y-3">
-                      {patient.medicines.map((medicine) => (
-                        <div
-                          key={medicine._id}
-                          className="rounded bg-gray-50 p-2"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium">
-                                {medicine.medicine_name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {medicine.dosage} • {medicine.frequency}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {medicine.route === "oral"
-                                  ? "口服"
-                                  : medicine.route === "injection"
-                                    ? "注射"
-                                    : medicine.route === "topical"
-                                      ? "外用"
-                                      : "吸入"}
-                              </p>
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${
-                                medicine.route === "injection"
-                                  ? "border-red-200 text-red-700"
-                                  : medicine.route === "oral"
-                                    ? "border-blue-200 text-blue-700"
-                                    : "border-green-200 text-green-700"
-                              }`}
-                            >
+          <div
+            ref={medicationsRef}
+            data-section="medications"
+            className="space-y-4"
+          >
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center space-x-2 text-sm">
+                  <Pill className="h-4 w-4" />
+                  <span>当前用药</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {patient.medicines.length > 0 ? (
+                  <div className="space-y-3">
+                    {patient.medicines.map((medicine) => (
+                      <div
+                        key={medicine._id}
+                        className="rounded bg-gray-50 p-2"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              {medicine.medicine_name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {medicine.dosage} • {medicine.frequency}
+                            </p>
+                            <p className="text-xs text-gray-500">
                               {medicine.route === "oral"
                                 ? "口服"
                                 : medicine.route === "injection"
@@ -457,26 +375,44 @@ export default function EHRSidebar({
                                   : medicine.route === "topical"
                                     ? "外用"
                                     : "吸入"}
-                            </Badge>
-                          </div>
-                          {medicine.notes && (
-                            <p className="mt-1 text-xs text-gray-600">
-                              {medicine.notes}
                             </p>
-                          )}
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${
+                              medicine.route === "injection"
+                                ? "border-red-200 text-red-700"
+                                : medicine.route === "oral"
+                                  ? "border-blue-200 text-blue-700"
+                                  : "border-green-200 text-green-700"
+                            }`}
+                          >
+                            {medicine.route === "oral"
+                              ? "口服"
+                              : medicine.route === "injection"
+                                ? "注射"
+                                : medicine.route === "topical"
+                                  ? "外用"
+                                  : "吸入"}
+                          </Badge>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-4 text-center">
-                      <Pill className="mx-auto h-8 w-8 text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-500">暂无用药记录</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                        {medicine.notes && (
+                          <p className="mt-1 text-xs text-gray-600">
+                            {medicine.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-4 text-center">
+                    <Pill className="mx-auto h-8 w-8 text-gray-400" />
+                    <p className="mt-2 text-sm text-gray-500">暂无用药记录</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </ScrollArea>
     </div>

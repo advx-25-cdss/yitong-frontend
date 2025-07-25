@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import {
   Mic,
-  MicOff,
   Play,
   Pause,
   Square,
@@ -15,7 +13,6 @@ import {
   FileText,
   Clock,
   User,
-  Activity,
 } from "lucide-react";
 import type { Patient } from "~/types";
 
@@ -65,7 +62,7 @@ export default function TranscriptionArea({
   return (
     <div className="h-full border-r bg-white">
       {/* Header */}
-      <div className="border-b bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
+      <div className="border-b bg-gradient-to-r from-white to-blue-50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <FileText className="h-5 w-5 text-blue-600" />
@@ -114,7 +111,7 @@ export default function TranscriptionArea({
         </div>
 
         {/* Recording indicator */}
-        {isTranscribing && (
+        {/* {isTranscribing && (
           <div className="mt-3 flex items-center space-x-2">
             <div className="flex items-center space-x-2">
               <div className="h-3 w-3 animate-pulse rounded-full bg-red-500"></div>
@@ -127,7 +124,7 @@ export default function TranscriptionArea({
               ></div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Content */}
@@ -180,26 +177,17 @@ export default function TranscriptionArea({
                     ) : (
                       <Play className="h-3 w-3" />
                     )}
-                    <span>播放</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center space-x-1"
-                  >
-                    <Volume2 className="h-3 w-3" />
-                    <span>音频</span>
                   </Button>
                 </div>
               )}
             </div>
 
             <ScrollArea
-              className={`${expanded ? "h-[calc(100%-60px)]" : "h-[calc(100%-60px)]"} transition-all duration-300`}
+              className={`${expanded ? "h-[calc(100%-40px)]" : "h-[calc(100%-60px)]"} transition-all duration-300`}
             >
               <div className="space-y-4">
                 {/* Patient info header */}
-                <div className="rounded-lg bg-blue-50 p-3">
+                {/* <div className="rounded-lg bg-blue-50 p-3">
                   <div className="mb-2 flex items-center space-x-2">
                     <User className="h-4 w-4 text-blue-600" />
                     <span className="font-medium text-blue-900">
@@ -213,7 +201,7 @@ export default function TranscriptionArea({
                       主诉: {patient.historyPresentIllness?.chief_complaint}
                     </p>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Transcription text */}
                 <div className="rounded-lg bg-gray-50 p-4">
@@ -299,15 +287,7 @@ export default function TranscriptionArea({
           </div>
         )}
       </div>
-
-      {/* Expansion hint */}
-      {!expanded && hasTranscription && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 transform">
-          <div className="rounded bg-black/70 px-2 py-1 text-xs text-white">
-            悬停查看详情
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }
