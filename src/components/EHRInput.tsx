@@ -3,39 +3,62 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Textarea } from "~/components/ui/textarea";
 import { Badge } from "~/components/ui/badge";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import {
   Save,
-  Plus,
-  Trash2,
-  Edit,
   FileText,
   TestTube,
   Pill,
   Stethoscope,
-  Activity,
   Clock,
   AlertCircle,
   CheckCircle,
-  User,
-  Calendar,
-  Target,
-  TrendingUp,
-  Zap,
   Brain,
   Settings,
+  Building2,
+  Scissors,
+  Plus,
+  Edit,
+  Calendar,
+  Activity,
 } from "lucide-react";
-import type { Patient } from "~/types";
+import type { Patient, Medicine, Test, Diagnosis, Treatment } from "~/types";
+import { TestBlock } from "./ehr/TestBlock";
+import { DiagnosisBlock } from "./ehr/DiagnosisBlock";
+import { HospitalizationBlock } from "./ehr/HospitalizationBlock";
+import { SurgeryBlock } from "./ehr/SurgeryBlock";
+import { TreatmentBlock } from "./ehr/TreatmentBlock";
+
+// Mock hospitalization data structure
+interface Hospitalization {
+  _id: string;
+  admission_date: string;
+  discharge_date?: string;
+  department: string;
+  bed_number: string;
+  attending_doctor: string;
+  admission_diagnosis: string;
+  treatment_plan: string[];
+  status: "active" | "discharged" | "planned";
+  notes?: string;
+}
+
+// Mock surgery data structure
+interface Surgery {
+  _id: string;
+  surgery_name: string;
+  surgery_date: string;
+  surgery_room: string;
+  surgeon: string;
+  anesthesia_type: "general" | "regional" | "local" | "sedation";
+  indication: string;
+  preparation: string[];
+  risk_assessment: "low" | "medium" | "high";
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
+  notes?: string;
+  duration?: number;
+}
 
 interface EHRInputProps {
   patient: Patient;
@@ -51,14 +74,185 @@ interface WorkflowStep {
 }
 
 export default function EHRInput({ patient }: EHRInputProps) {
-  const [activeSection, setActiveSection] = useState("workflow");
+  const [activeSection, setActiveSection] = useState("overview");
   const [workflowStep, setWorkflowStep] = useState(0);
 
+  // State for managing component data
+  const [medicines, setMedicines] = useState<Medicine[]>(
+    patient.medicines || [],
+  );
+  const [tests, setTests] = useState<Test[]>(patient.tests || []);
+  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>(
+    patient.diagnoses || [],
+  );
+  const [treatments, setTreatments] = useState<Treatment[]>(
+    patient.treatments || [],
+  );
+
+  // Mock data for hospitalizations and surgeries
+  const [hospitalizations, setHospitalizations] = useState<Hospitalization[]>([
+    {
+      _id: "hosp1",
+      admission_date: "2023-12-01T00:00:00.000Z",
+      department: "心血管内科",
+      bed_number: "15A-203",
+      attending_doctor: "李医生",
+      admission_diagnosis: "急性冠脉综合征，需要进一步检查和治疗观察",
+      treatment_plan: [
+        "药物治疗：抗血小板聚集",
+        "监护：24小时心电监护",
+        "检查：每日血常规、心酶",
+      ],
+      status: "active",
+      notes: "",
+    },
+  ]);
+
+  const [surgeries, setSurgeries] = useState<Surgery[]>([
+    {
+      _id: "surg1",
+      surgery_name: "冠脉搭桥手术",
+      surgery_date: "2023-12-03T09:00:00.000Z",
+      surgery_room: "手术室3",
+      surgeon: "王主任",
+      anesthesia_type: "general",
+      indication: "冠状动脉严重狭窄，药物治疗效果不佳，需要手术治疗",
+      preparation: ["术前检查完成", "麻醉评估完成", "术前禁食8小时"],
+      risk_assessment: "medium",
+      status: "scheduled",
+      notes: "",
+      duration: 240,
+    },
+  ]);
+
+  // CRUD handlers for medicines
+  const handleAddMedicine = (medicine: Omit<Medicine, "_id">) => {
+    const newMedicine: Medicine = {
+      ...medicine,
+      _id: `med_${Date.now()}`,
+    };
+    setMedicines((prev) => [...prev, newMedicine]);
+  };
+
+  const handleUpdateMedicine = (id: string, updates: Partial<Medicine>) => {
+    setMedicines((prev) =>
+      prev.map((med) => (med._id === id ? { ...med, ...updates } : med)),
+    );
+  };
+
+  const handleDeleteMedicine = (id: string) => {
+    setMedicines((prev) => prev.filter((med) => med._id !== id));
+  };
+
+  // CRUD handlers for tests
+  const handleAddTest = (test: Omit<Test, "_id">) => {
+    const newTest: Test = {
+      ...test,
+      _id: `test_${Date.now()}`,
+    };
+    setTests((prev) => [...prev, newTest]);
+  };
+
+  const handleUpdateTest = (id: string, updates: Partial<Test>) => {
+    setTests((prev) =>
+      prev.map((test) => (test._id === id ? { ...test, ...updates } : test)),
+    );
+  };
+
+  const handleDeleteTest = (id: string) => {
+    setTests((prev) => prev.filter((test) => test._id !== id));
+  };
+
+  // CRUD handlers for diagnoses
+  const handleAddDiagnosis = (diagnosis: Omit<Diagnosis, "_id">) => {
+    const newDiagnosis: Diagnosis = {
+      ...diagnosis,
+      _id: `diag_${Date.now()}`,
+    };
+    setDiagnoses((prev) => [...prev, newDiagnosis]);
+  };
+
+  const handleUpdateDiagnosis = (id: string, updates: Partial<Diagnosis>) => {
+    setDiagnoses((prev) =>
+      prev.map((diag) => (diag._id === id ? { ...diag, ...updates } : diag)),
+    );
+  };
+
+  const handleDeleteDiagnosis = (id: string) => {
+    setDiagnoses((prev) => prev.filter((diag) => diag._id !== id));
+  };
+
+  // CRUD handlers for hospitalizations
+  const handleAddHospitalization = (
+    hospitalization: Omit<Hospitalization, "_id">,
+  ) => {
+    const newHospitalization: Hospitalization = {
+      ...hospitalization,
+      _id: `hosp_${Date.now()}`,
+    };
+    setHospitalizations((prev) => [...prev, newHospitalization]);
+  };
+
+  const handleUpdateHospitalization = (
+    id: string,
+    updates: Partial<Hospitalization>,
+  ) => {
+    setHospitalizations((prev) =>
+      prev.map((hosp) => (hosp._id === id ? { ...hosp, ...updates } : hosp)),
+    );
+  };
+
+  const handleDeleteHospitalization = (id: string) => {
+    setHospitalizations((prev) => prev.filter((hosp) => hosp._id !== id));
+  };
+
+  // CRUD handlers for surgeries
+  const handleAddSurgery = (surgery: Omit<Surgery, "_id">) => {
+    const newSurgery: Surgery = {
+      ...surgery,
+      _id: `surg_${Date.now()}`,
+    };
+    setSurgeries((prev) => [...prev, newSurgery]);
+  };
+
+  const handleUpdateSurgery = (id: string, updates: Partial<Surgery>) => {
+    setSurgeries((prev) =>
+      prev.map((surg) => (surg._id === id ? { ...surg, ...updates } : surg)),
+    );
+  };
+
+  const handleDeleteSurgery = (id: string) => {
+    setSurgeries((prev) => prev.filter((surg) => surg._id !== id));
+  };
+
+  // CRUD handlers for treatments
+  const handleAddTreatment = (treatment: Omit<Treatment, "_id">) => {
+    const newTreatment: Treatment = {
+      ...treatment,
+      _id: `treat_${Date.now()}`,
+    };
+    setTreatments((prev) => [...prev, newTreatment]);
+  };
+
+  const handleUpdateTreatment = (id: string, updates: Partial<Treatment>) => {
+    setTreatments((prev) =>
+      prev.map((treat) =>
+        treat._id === id ? { ...treat, ...updates } : treat,
+      ),
+    );
+  };
+
+  const handleDeleteTreatment = (id: string) => {
+    setTreatments((prev) => prev.filter((treat) => treat._id !== id));
+  };
+
   // Refs for each section
-  const workflowRef = useRef<HTMLDivElement>(null);
+  const overviewRef = useRef<HTMLDivElement>(null);
+  const testsRef = useRef<HTMLDivElement>(null);
   const diagnosisRef = useRef<HTMLDivElement>(null);
   const treatmentRef = useRef<HTMLDivElement>(null);
-  const testsRef = useRef<HTMLDivElement>(null);
+  const hospitalizationRef = useRef<HTMLDivElement>(null);
+  const surgeryRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const workflowSteps: WorkflowStep[] = [
@@ -138,10 +332,12 @@ export default function EHRInput({ patient }: EHRInputProps) {
 
   const scrollToSection = (sectionId: string) => {
     const refs = {
-      workflow: workflowRef,
+      overview: overviewRef,
+      tests: testsRef,
       diagnosis: diagnosisRef,
       treatment: treatmentRef,
-      tests: testsRef,
+      hospitalization: hospitalizationRef,
+      surgery: surgeryRef,
     };
 
     const targetRef = refs[sectionId as keyof typeof refs];
@@ -168,8 +364,22 @@ export default function EHRInput({ patient }: EHRInputProps) {
 
   // Intersection Observer for section highlighting
   useEffect(() => {
-    const refs = [workflowRef, diagnosisRef, treatmentRef, testsRef];
-    const sectionIds = ["workflow", "diagnosis", "treatment", "tests"];
+    const refs = [
+      overviewRef,
+      testsRef,
+      diagnosisRef,
+      treatmentRef,
+      hospitalizationRef,
+      surgeryRef,
+    ];
+    const sectionIds = [
+      "overview",
+      "tests",
+      "diagnosis",
+      "treatment",
+      "hospitalization",
+      "surgery",
+    ];
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -230,13 +440,22 @@ export default function EHRInput({ patient }: EHRInputProps) {
       <div className="sticky top-0 z-10 border-b bg-white">
         <div className="flex space-x-1 overflow-x-auto p-2">
           <Button
-            variant={activeSection === "workflow" ? "default" : "ghost"}
+            variant={activeSection === "overview" ? "default" : "ghost"}
             size="sm"
-            onClick={() => scrollToSection("workflow")}
+            onClick={() => scrollToSection("overview")}
             className="flex items-center space-x-1 whitespace-nowrap"
           >
-            <Zap className="h-3 w-3" />
+            <FileText className="h-3 w-3" />
             <span>工作流程</span>
+          </Button>
+          <Button
+            variant={activeSection === "tests" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => scrollToSection("tests")}
+            className="flex items-center space-x-1 whitespace-nowrap"
+          >
+            <TestTube className="h-3 w-3" />
+            <span>检查项目</span>
           </Button>
           <Button
             variant={activeSection === "diagnosis" ? "default" : "ghost"}
@@ -257,28 +476,34 @@ export default function EHRInput({ patient }: EHRInputProps) {
             <span>治疗方案</span>
           </Button>
           <Button
-            variant={activeSection === "tests" ? "default" : "ghost"}
+            variant={activeSection === "hospitalization" ? "default" : "ghost"}
             size="sm"
-            onClick={() => scrollToSection("tests")}
+            onClick={() => scrollToSection("hospitalization")}
             className="flex items-center space-x-1 whitespace-nowrap"
           >
-            <TestTube className="h-3 w-3" />
-            <span>检查项目</span>
+            <Building2 className="h-3 w-3" />
+            <span>住院管理</span>
+          </Button>
+          <Button
+            variant={activeSection === "surgery" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => scrollToSection("surgery")}
+            className="flex items-center space-x-1 whitespace-nowrap"
+          >
+            <Scissors className="h-3 w-3" />
+            <span>手术管理</span>
           </Button>
         </div>
       </div>
 
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
         <div className="space-y-8">
-          {/* Workflow Section */}
-          <div ref={workflowRef} className="space-y-4 p-4">
+          {/* Overview Section (Workflow) */}
+          <div ref={overviewRef} className="space-y-4 p-4">
             <div className="mb-6">
               <h4 className="mb-2 overflow-x-auto font-medium text-gray-900">
                 CDSS 工作流程
               </h4>
-              <p className="overflow-x-auto text-sm text-gray-600">
-                按照标准化流程完成患者诊疗，每个步骤都有AI系统协助
-              </p>
             </div>
 
             <div className="space-y-3">
@@ -420,348 +645,73 @@ export default function EHRInput({ patient }: EHRInputProps) {
             )}
           </div>
 
+          {/* Tests Section */}
+          <div
+            ref={testsRef}
+            className="bg-purple-25/30 space-y-4 border-t p-4"
+          >
+            <TestBlock
+              tests={tests}
+              onAdd={handleAddTest}
+              onUpdate={handleUpdateTest}
+              onDelete={handleDeleteTest}
+            />
+          </div>
+
           {/* Diagnosis Section */}
-          <div ref={diagnosisRef} className="bg-red-25 space-y-4 border-t p-4">
-            <div className="flex items-center justify-between overflow-x-auto">
-              <h4 className="font-medium whitespace-nowrap text-gray-900">
-                诊断管理
-              </h4>
-              <Button size="sm" className="whitespace-nowrap">
-                <Plus className="mr-1 h-3 w-3" />
-                添加诊断
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {patient.diagnoses.map((diagnosis) => (
-                <Card key={diagnosis._id} className="border-red-200 bg-red-50">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between overflow-x-auto">
-                      <CardTitle className="flex items-center space-x-2 text-sm">
-                        <Stethoscope className="h-4 w-4 text-red-600" />
-                        <span className="overflow-x-auto text-red-900">
-                          {diagnosis.diagnosis_name}
-                        </span>
-                      </CardTitle>
-                      <div className="flex flex-shrink-0 items-center space-x-2">
-                        <Badge className="bg-red-100 whitespace-nowrap text-red-800">
-                          置信度: {diagnosis.probability}%
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={`whitespace-nowrap ${
-                            diagnosis.status === "active"
-                              ? "border-green-200 text-green-800"
-                              : diagnosis.status === "resolved"
-                                ? "border-gray-200 text-gray-800"
-                                : "border-yellow-200 text-yellow-800"
-                          }`}
-                        >
-                          {diagnosis.status === "active"
-                            ? "活动期"
-                            : diagnosis.status === "resolved"
-                              ? "已解决"
-                              : "复发"}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="font-medium text-red-600">诊断日期</p>
-                        <p className="text-red-800">
-                          {new Date(
-                            diagnosis.diagnosis_date,
-                          ).toLocaleDateString("zh-CN")}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-red-600">随访安排</p>
-                        <p className="overflow-x-auto text-red-800">
-                          {diagnosis.follow_up}
-                        </p>
-                      </div>
-                    </div>
-
-                    {diagnosis.notes && (
-                      <div>
-                        <p className="text-sm font-medium text-red-600">备注</p>
-                        <p className="overflow-x-auto text-sm text-red-800">
-                          {diagnosis.notes}
-                        </p>
-                      </div>
-                    )}
-
-                    {diagnosis.additional_info && (
-                      <div>
-                        <p className="text-sm font-medium text-red-600">
-                          补充信息
-                        </p>
-                        <p className="overflow-x-auto text-sm text-red-800">
-                          {diagnosis.additional_info}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Edit className="mr-1 h-3 w-3" />
-                        编辑
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-red-200 text-red-600"
-                      >
-                        <Trash2 className="mr-1 h-3 w-3" />
-                        删除
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          <div
+            ref={diagnosisRef}
+            className="bg-red-25/30 space-y-4 border-t p-4"
+          >
+            <DiagnosisBlock
+              diagnoses={diagnoses}
+              onAdd={handleAddDiagnosis}
+              onUpdate={handleUpdateDiagnosis}
+              onDelete={handleDeleteDiagnosis}
+            />
           </div>
 
           {/* Treatment Section */}
           <div
             ref={treatmentRef}
-            className="bg-green-25 space-y-4 border-t p-4"
+            className="bg-green-25/30 space-y-4 border-t p-4"
           >
-            <div className="flex items-center justify-between overflow-x-auto">
-              <h4 className="font-medium whitespace-nowrap text-gray-900">
-                治疗方案
-              </h4>
-              <Button size="sm" className="whitespace-nowrap">
-                <Plus className="mr-1 h-3 w-3" />
-                添加治疗
-              </Button>
-            </div>
-
-            {/* Medications */}
-            <div className="space-y-3">
-              <h5 className="flex items-center space-x-2 font-medium text-blue-900">
-                <Pill className="h-4 w-4" />
-                <span>药物治疗</span>
-              </h5>
-
-              {patient.medicines.map((medicine) => (
-                <Card key={medicine._id} className="border-blue-200 bg-blue-50">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between overflow-x-auto">
-                      <div className="min-w-0 flex-1">
-                        <h6 className="overflow-x-auto font-medium text-blue-900">
-                          {medicine.medicine_name}
-                        </h6>
-                        <div className="space-y-1 text-sm text-blue-700">
-                          <p className="overflow-x-auto">
-                            剂量: {medicine.dosage} • 频次: {medicine.frequency}
-                          </p>
-                          <p className="overflow-x-auto">
-                            给药途径:{" "}
-                            {medicine.route === "oral"
-                              ? "口服"
-                              : medicine.route === "injection"
-                                ? "注射"
-                                : medicine.route === "topical"
-                                  ? "外用"
-                                  : "吸入"}
-                          </p>
-                          {medicine.notes && (
-                            <p className="overflow-x-auto">
-                              备注: {medicine.notes}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-shrink-0 items-center space-x-2">
-                        <Badge
-                          className={`whitespace-nowrap ${
-                            medicine.route === "injection"
-                              ? "bg-red-100 text-red-800"
-                              : medicine.route === "oral"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {medicine.route === "oral"
-                            ? "口服"
-                            : medicine.route === "injection"
-                              ? "注射"
-                              : medicine.route === "topical"
-                                ? "外用"
-                                : "吸入"}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Other Treatments */}
-            <div className="space-y-3">
-              <h5 className="flex items-center space-x-2 font-medium text-green-900">
-                <Target className="h-4 w-4" />
-                <span>其他治疗</span>
-              </h5>
-
-              {patient.treatments.map((treatment) => (
-                <Card
-                  key={treatment._id}
-                  className="border-green-200 bg-green-50"
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between overflow-x-auto">
-                      <div className="min-w-0 flex-1">
-                        <h6 className="overflow-x-auto font-medium text-green-900">
-                          {treatment.treatment_name}
-                        </h6>
-                        <div className="space-y-1 text-sm text-green-700">
-                          <p className="overflow-x-auto">
-                            类型:{" "}
-                            {treatment.treatment_type === "medication"
-                              ? "药物治疗"
-                              : treatment.treatment_type === "therapy"
-                                ? "物理治疗"
-                                : treatment.treatment_type === "surgery"
-                                  ? "手术治疗"
-                                  : "生活方式干预"}
-                          </p>
-                          <p>
-                            日期:{" "}
-                            {new Date(
-                              treatment.treatment_date,
-                            ).toLocaleDateString("zh-CN")}
-                          </p>
-                          {treatment.outcome && (
-                            <p className="overflow-x-auto">
-                              结果: {treatment.outcome}
-                            </p>
-                          )}
-                          {treatment.notes && (
-                            <p className="overflow-x-auto">
-                              备注: {treatment.notes}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-shrink-0 items-center space-x-2">
-                        <Badge
-                          className={`whitespace-nowrap ${
-                            treatment.treatment_type === "surgery"
-                              ? "bg-red-100 text-red-800"
-                              : treatment.treatment_type === "medication"
-                                ? "bg-blue-100 text-blue-800"
-                                : treatment.treatment_type === "therapy"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : "bg-orange-100 text-orange-800"
-                          }`}
-                        >
-                          {treatment.treatment_type === "medication"
-                            ? "药物"
-                            : treatment.treatment_type === "therapy"
-                              ? "治疗"
-                              : treatment.treatment_type === "surgery"
-                                ? "手术"
-                                : "生活方式"}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <TreatmentBlock
+              medicines={medicines}
+              treatments={treatments}
+              onAddMedicine={handleAddMedicine}
+              onUpdateMedicine={handleUpdateMedicine}
+              onDeleteMedicine={handleDeleteMedicine}
+              onAddTreatment={handleAddTreatment}
+              onUpdateTreatment={handleUpdateTreatment}
+              onDeleteTreatment={handleDeleteTreatment}
+            />
           </div>
 
-          {/* Tests Section */}
-          <div ref={testsRef} className="bg-purple-25 space-y-4 border-t p-4">
-            <div className="flex items-center justify-between overflow-x-auto">
-              <h4 className="font-medium whitespace-nowrap text-gray-900">
-                检查项目
-              </h4>
-              <Button size="sm" className="whitespace-nowrap">
-                <Plus className="mr-1 h-3 w-3" />
-                添加检查
-              </Button>
-            </div>
+          {/* Hospitalization Section */}
+          <div
+            ref={hospitalizationRef}
+            className="bg-blue-25/30 space-y-4 border-t p-4"
+          >
+            <HospitalizationBlock
+              hospitalizations={hospitalizations}
+              onAdd={handleAddHospitalization}
+              onUpdate={handleUpdateHospitalization}
+              onDelete={handleDeleteHospitalization}
+            />
+          </div>
 
-            <div className="space-y-3">
-              {patient.tests.map((test) => (
-                <Card key={test._id} className="border-purple-200 bg-purple-50">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between overflow-x-auto">
-                      <CardTitle className="flex items-center space-x-2 text-sm">
-                        <TestTube className="h-4 w-4 text-purple-600" />
-                        <span className="overflow-x-auto text-purple-900">
-                          {test.test_name}
-                        </span>
-                      </CardTitle>
-                      <Badge
-                        variant="outline"
-                        className="border-purple-200 whitespace-nowrap text-purple-800"
-                      >
-                        {new Date(test.test_date).toLocaleDateString("zh-CN")}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {test.results && test.results.length > 0 && (
-                      <div>
-                        <p className="mb-2 text-sm font-medium text-purple-600">
-                          检查结果
-                        </p>
-                        <div className="space-y-1">
-                          {test.results.map((result, index) => (
-                            <div
-                              key={index}
-                              className="rounded border border-purple-200 bg-white p-2"
-                            >
-                              <p className="overflow-x-auto text-sm text-purple-800">
-                                {result}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {test.notes && (
-                      <div>
-                        <p className="text-sm font-medium text-purple-600">
-                          备注
-                        </p>
-                        <p className="overflow-x-auto text-sm text-purple-800">
-                          {test.notes}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Edit className="mr-1 h-3 w-3" />
-                        编辑
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-purple-200 text-purple-600"
-                      >
-                        <TrendingUp className="mr-1 h-3 w-3" />
-                        查看趋势
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          {/* Surgery Section */}
+          <div
+            ref={surgeryRef}
+            className="bg-orange-25/30 space-y-4 border-t p-4"
+          >
+            <SurgeryBlock
+              surgeries={surgeries}
+              onAdd={handleAddSurgery}
+              onUpdate={handleUpdateSurgery}
+              onDelete={handleDeleteSurgery}
+            />
           </div>
         </div>
       </ScrollArea>

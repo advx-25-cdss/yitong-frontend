@@ -1,31 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "~/components/ui/resizable";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import { Badge } from "~/components/ui/badge";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Mic,
-  MicOff,
-  Play,
-  Pause,
-  User,
-  FileText,
-  Activity,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Pill,
-  TestTube,
-  Stethoscope,
-} from "lucide-react";
 import { mockPatients } from "~/lib/mockData";
 import EHRSidebar from "~/components/EHRSidebar";
 import TranscriptionArea from "~/components/TranscriptionArea";
@@ -33,6 +13,7 @@ import ChatInterface from "~/components/ChatInterface";
 import EHRInput from "~/components/EHRInput";
 import type { ImperativePanelHandle } from "react-resizable-panels";
 import type { Patient } from "~/types";
+import { User } from "lucide-react";
 
 export default function CDSSScreen() {
   const [selectedPatientId, setSelectedPatientId] = useState("CVD001");
@@ -102,7 +83,7 @@ export default function CDSSScreen() {
         <ResizableHandle />
 
         {/* Middle Panel - Transcription and Chat */}
-        <ResizablePanel defaultSize={45} minSize={30}>
+        <ResizablePanel defaultSize={45} minSize={28}>
           <div className="flex h-full flex-col">
             {/* Transcription Area */}
             <div
@@ -135,7 +116,7 @@ export default function CDSSScreen() {
         <ResizableHandle />
 
         {/* Right Panel - EHR Input */}
-        <ResizablePanel defaultSize={30} minSize={25}>
+        <ResizablePanel defaultSize={30} minSize={30}>
           <EHRInput patient={selectedPatient} />
         </ResizablePanel>
       </ResizablePanelGroup>

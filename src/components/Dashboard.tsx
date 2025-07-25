@@ -19,7 +19,6 @@ import {
   TrendingUp,
   Search,
   Eye,
-  Heart,
 } from "lucide-react";
 import { mockPatients, dashboardStats } from "~/lib/mockData";
 import type { Patient } from "~/types";
@@ -35,7 +34,7 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
   >("all");
 
   const filteredPatients = useMemo((): Patient[] => {
-    return (mockPatients as Patient[]).filter((patient) => {
+    return mockPatients.filter((patient) => {
       const matchesSearch =
         patient.demographics.first_name
           .toLowerCase()

@@ -43,7 +43,7 @@ export default function TranscriptionArea({
         setDuration((prev) => prev + 1);
 
         // Simulate transcription text appearing
-        const fullText = patient.cases[0]?.transcriptions || "";
+        const fullText = patient.cases[0]?.transcriptions ?? "";
         const progress = Math.min(duration * 10, fullText.length);
         setCurrentTranscription(fullText.slice(0, progress));
       }, 1000);
@@ -139,7 +139,7 @@ export default function TranscriptionArea({
               <div>
                 <h4 className="font-medium text-gray-900">准备开始会诊记录</h4>
                 <p className="mt-2 max-w-sm text-sm text-gray-500">
-                  点击"开始转录"按钮开始记录与患者的会诊对话，系统将自动转录为文字。
+                  点击&quot;开始转录&quot;按钮开始记录与患者的会诊对话，系统将自动转录为文字。
                 </p>
               </div>
               <Button
@@ -287,7 +287,6 @@ export default function TranscriptionArea({
           </div>
         )}
       </div>
-      
     </div>
   );
 }

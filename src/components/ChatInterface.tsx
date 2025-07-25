@@ -1,14 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Badge } from "~/components/ui/badge";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import {
   Send,
-  Bot,
   User,
   Lightbulb,
   AlertTriangle,
@@ -19,8 +16,6 @@ import {
   Stethoscope,
   Brain,
   Heart,
-  FileText,
-  Sparkles,
 } from "lucide-react";
 import type { Patient } from "~/types";
 
@@ -330,7 +325,7 @@ export default function ChatInterface({
       </ScrollArea>
 
       {/* Input Area */}
-      <div className="bg-white p-4">
+      <div className="bg-white p-4 pt-0.5">
         {/* Outer Input Container */}
         <div className="mb-3 rounded-lg border border-gray-300 bg-white p-3 focus-within:border-transparent focus-within:ring-1 focus-within:ring-gray-400">
           {/* Text Input */}
@@ -350,7 +345,7 @@ export default function ChatInterface({
 
           {/* Bottom Row: Mode Selection (Left) + Send Button (Right) */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5 space-y-1.5 flex-wrap">
               <Button
                 variant="ghost"
                 size="sm"
