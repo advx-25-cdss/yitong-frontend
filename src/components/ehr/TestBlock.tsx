@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -21,9 +21,10 @@ import {
   FileImage,
 } from "lucide-react";
 import type { Test } from "~/types";
+import { testsApi } from "~/lib/api";
 
 interface TestBlockProps {
-  tests: Test[];
+  case_id: string;
   onAdd: (test: Omit<Test, "_id">) => void;
   onUpdate: (id: string, test: Partial<Test>) => void;
   onDelete: (id: string) => void;
@@ -44,7 +45,7 @@ interface TestImage {
 }
 
 export function TestBlock({
-  tests,
+  case_id,
   onAdd,
   onUpdate,
   onDelete,
@@ -53,9 +54,9 @@ export function TestBlock({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [testImages, setTestImages] = useState<Record<string, TestImage>>({});
-  const [loadingResults, setLoadingResults] = useState<Record<string, boolean>>(
-    {},
-  );
+  const [loadingResults, setLoadingResults] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
+  const [localTests, setLocalTests] = useState<Test[]>([]);
 
   const [editForm, setEditForm] = useState<TestFormData>({
     test_name: "",
@@ -71,6 +72,25 @@ export function TestBlock({
     notes: "",
   });
 
+  // Load tests for this case
+  useEffect(() => {
+    const loadTests = async () => {
+      if (!case_id) return;
+      
+      setLoading(true);
+      try {
+        const response = await testsApi.getByCase(case_id);
+        setLocalTests(response.data.data);
+      } catch (error) {
+        console.error('Failed to load tests:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTests();
+  }, [case_id]);
+
   const handleEdit = (test: Test) => {
     setEditingId(test._id);
     setEditForm({
@@ -81,17 +101,29 @@ export function TestBlock({
     });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingId) {
       const filteredResults = editForm.results.filter(
         (result) => result.trim() !== "",
       );
-      onUpdate(editingId, {
+      const updateData = {
         ...editForm,
         results: filteredResults,
         test_date: new Date(editForm.test_date),
-      });
-      setEditingId(null);
+      };
+      
+      try {
+        const response = await testsApi.update(editingId, updateData);
+        const updatedTest = response.data;
+        setLocalTests(prev => 
+          prev.map(test => test._id === editingId ? updatedTest : test)
+        );
+        onUpdate(editingId, updateData);
+        setEditingId(null);
+      } catch (error) {
+        console.error('Failed to update test:', error);
+        alert('更新检查失败，请重试');
+      }
     }
   };
 
@@ -105,7 +137,7 @@ export function TestBlock({
     });
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (addForm.test_name && addForm.test_date) {
       const filteredResults = addForm.results.filter(
         (result) => result.trim() !== "",
@@ -115,32 +147,48 @@ export function TestBlock({
         test_date: new Date(addForm.test_date),
         results: filteredResults,
         notes: addForm.notes,
-        case_id: "", // These will be set by the parent component
-        patient_id: "",
+        case_id: case_id,
+        patient_id: "", // This should be provided by the parent component
         created_at: new Date(),
         updated_at: new Date(),
       };
-      onAdd(newTest);
-      setAddForm({
-        test_name: "",
-        test_date: new Date().toISOString().split("T")[0] ?? "",
-        results: [""],
-        notes: "",
-      });
-      setIsAddModalOpen(false);
+      
+      try {
+        const response = await testsApi.create(newTest);
+        const createdTest = response.data;
+        setLocalTests(prev => [...prev, createdTest]);
+        onAdd(newTest);
+        setAddForm({
+          test_name: "",
+          test_date: new Date().toISOString().split("T")[0] ?? "",
+          results: [""],
+          notes: "",
+        });
+        setIsAddModalOpen(false);
+      } catch (error) {
+        console.error('Failed to create test:', error);
+        alert('创建检查失败，请重试');
+      }
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("确定要删除这个检查项目吗？")) {
-      onDelete(id);
-      // Also remove associated image and loading state
-      const newImages = { ...testImages };
-      const newLoading = { ...loadingResults };
-      delete newImages[id];
-      delete newLoading[id];
-      setTestImages(newImages);
-      setLoadingResults(newLoading);
+      try {
+        await testsApi.delete(id);
+        setLocalTests(prev => prev.filter(test => test._id !== id));
+        onDelete(id);
+        // Also remove associated image and loading state
+        const newImages = { ...testImages };
+        const newLoading = { ...loadingResults };
+        delete newImages[id];
+        delete newLoading[id];
+        setTestImages(newImages);
+        setLoadingResults(newLoading);
+      } catch (error) {
+        console.error('Failed to delete test:', error);
+        alert('删除检查失败，请重试');
+      }
     }
   };
 
@@ -259,7 +307,7 @@ export function TestBlock({
           <TestTube className="h-5 w-5 text-purple-600" />
           <h4 className="text-lg font-semibold text-gray-900">检查项目</h4>
           <Badge variant="outline" className="text-gray-600">
-            {tests.length} 项
+            {localTests.length} 项
           </Badge>
         </div>
         <Button
@@ -275,14 +323,19 @@ export function TestBlock({
 
       {/* Test List */}
       <div className="space-y-4">
-        {tests.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-purple-500 border-t-transparent"></div>
+            <span className="ml-2 text-gray-500">加载检查数据...</span>
+          </div>
+        ) : localTests.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-200 py-12 text-center">
             <TestTube className="mx-auto mb-3 h-8 w-8 text-gray-400" />
             <p className="mb-2 text-gray-500">暂无检查记录</p>
             <p className="text-sm text-gray-400">点击上方按钮添加检查项目</p>
           </div>
         ) : (
-          tests.map((test) => (
+          localTests.map((test) => (
             <Card
               key={test._id}
               className="border border-gray-200 shadow-sm transition-shadow hover:shadow-md"

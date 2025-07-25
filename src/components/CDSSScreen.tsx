@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "~/components/ui/resizable";
-import { mockPatients } from "~/lib/mockData";
+import { getPatientById } from "~/lib/dataService";
 import EHRSidebar from "~/components/EHRSidebar";
 import TranscriptionArea from "~/components/TranscriptionArea";
 import ChatInterface from "~/components/ChatInterface";
@@ -15,17 +15,37 @@ import type { ImperativePanelHandle } from "react-resizable-panels";
 import type { Patient } from "~/types";
 import { User } from "lucide-react";
 
-export default function CDSSScreen() {
-  const [selectedPatientId, setSelectedPatientId] = useState("CVD001");
+export default function CDSSScreen(params:{ patientId: string }) {
+  const [selectedPatientId, setSelectedPatientId] = useState(params.patientId);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcriptionExpanded, setTranscriptionExpanded] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const sidebarPanelRef = useRef<ImperativePanelHandle>(null);
 
-  const selectedPatient = mockPatients.find(
-    (p: Patient) => p.demographics.patient_id === selectedPatientId,
-  );
+  // Fetch specific patient data when selectedPatientId changes
+  useEffect(() => {
+    const fetchPatient = async () => {
+      if (!selectedPatientId) return;
+      try {
+        setLoading(true);
+        const patientData = await getPatientById(selectedPatientId);
+        setSelectedPatient(patientData);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch patient:', err);
+        setError('Failed to load patient data. Please try again.');
+        setSelectedPatient(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatient();
+  }, [selectedPatientId]);
 
   const handleToggleCollapse = () => {
     if (sidebarPanelRef.current) {
@@ -47,6 +67,34 @@ export default function CDSSScreen() {
       setSidebarCollapsed(false);
     }
   };
+
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Loading patients...</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Please wait while we fetch patient data
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 text-red-400">⚠️</div>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading data</h3>
+          <p className="mt-1 text-sm text-gray-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!selectedPatient) {
     return (

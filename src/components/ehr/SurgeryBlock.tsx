@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -45,6 +45,7 @@ interface Surgery {
 }
 
 interface SurgeryBlockProps {
+  case_id: string;
   surgeries: Surgery[];
   onAdd: (surgery: Omit<Surgery, "_id">) => void;
   onUpdate: (id: string, surgery: Partial<Surgery>) => void;
@@ -99,6 +100,7 @@ const riskColors = {
 };
 
 export function SurgeryBlock({
+  case_id,
   surgeries,
   onAdd,
   onUpdate,
@@ -106,6 +108,7 @@ export function SurgeryBlock({
 }: SurgeryBlockProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [localSurgeries, setLocalSurgeries] = useState<Surgery[]>(surgeries);
   const [editForm, setEditForm] = useState<SurgeryFormData>({
     surgery_name: "",
     surgery_date: "",
@@ -132,6 +135,11 @@ export function SurgeryBlock({
     notes: "",
     duration: undefined,
   });
+
+  // Update local state when props change
+  useEffect(() => {
+    setLocalSurgeries(surgeries);
+  }, [surgeries]);
 
   const handleEdit = (surgery: Surgery) => {
     setEditingId(surgery._id);
@@ -275,7 +283,7 @@ export function SurgeryBlock({
           <Scissors className="h-5 w-5 text-orange-600" />
           <h4 className="text-lg font-semibold text-gray-900">手术管理</h4>
           <Badge variant="outline" className="text-gray-600">
-            {surgeries.length} 项
+            {localSurgeries.length} 项
           </Badge>
         </div>
         <Button
@@ -291,14 +299,14 @@ export function SurgeryBlock({
 
       {/* Surgery List */}
       <div className="space-y-4">
-        {surgeries.length === 0 ? (
+        {localSurgeries.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-200 py-12 text-center">
             <Scissors className="mx-auto mb-3 h-8 w-8 text-gray-400" />
             <p className="mb-2 text-gray-500">暂无手术记录</p>
             <p className="text-sm text-gray-400">点击上方按钮安排手术</p>
           </div>
         ) : (
-          surgeries.map((surgery) => (
+          localSurgeries.map((surgery) => (
             <Card
               key={surgery._id}
               className="border border-gray-200 shadow-sm transition-shadow hover:shadow-md"

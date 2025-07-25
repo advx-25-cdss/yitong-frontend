@@ -40,7 +40,7 @@ export interface HistoryPresentIllness {
   patient_id: string;
   chief_complaint: string;
   history_of_present_illness: string;
-  onset?: string;
+  onset?: 'sudden' | 'gradual';
   duration?: string;
   severity?: number;
   quality?: string;
@@ -195,4 +195,26 @@ export interface Patient {
   medicines: Medicine[];
   diagnoses: Diagnosis[];
   treatments: Treatment[];
+}
+
+// API Response Wrapper Types
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+}
+
+export interface ApiListResponse<T> {
+  data: T[];
+  total: number;
+  skip?: number;
+  limit?: number;
+  count?: number;
+}
+
+export interface ApiSearchResponse<T> {
+  data: T[];
+  total: number;
+  query: string;
+  skip: number;
+  limit: number;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -27,8 +27,10 @@ import {
   Calendar,
 } from "lucide-react";
 import type { Medicine, Treatment } from "~/types";
+import { treatmentsApi } from "~/lib/api";
 
 interface TreatmentBlockProps {
+  case_id: string;
   medicines: Medicine[];
   treatments: Treatment[];
   onAddMedicine: (medicine: Omit<Medicine, "_id">) => void;
@@ -83,6 +85,7 @@ const routeColors = {
 };
 
 export function TreatmentBlock({
+  case_id,
   medicines,
   treatments,
   onAddMedicine,
@@ -98,6 +101,9 @@ export function TreatmentBlock({
   const [editingMedicineId, setEditingMedicineId] = useState<string | null>(
     null,
   );
+  const [loading, setLoading] = useState(false);
+  const [localMedicines, setLocalMedicines] = useState<Medicine[]>(medicines);
+  const [localTreatments, setLocalTreatments] = useState<Treatment[]>(treatments);
 
   // Medicine form state
   const [medicineForm, setMedicineForm] = useState<MedicineFormData>({
@@ -140,11 +146,36 @@ export function TreatmentBlock({
       notes: "",
     });
 
+  // Load treatments for this case
+  useEffect(() => {
+    const loadData = async () => {
+      if (!case_id) return;
+      
+      setLoading(true);
+      try {
+        const treatmentsResponse = await treatmentsApi.getByCase(case_id);
+        setLocalTreatments(treatmentsResponse.data.data);
+      } catch (error) {
+        console.error('Failed to load treatments data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [case_id]);
+
+  // Update local state when props change
+  useEffect(() => {
+    setLocalMedicines(medicines);
+    setLocalTreatments(treatments);
+  }, [medicines, treatments]);
+
   // Filter treatments by type
-  const lifestyleTreatments = treatments.filter(
-    (t) => t.treatment_type === "lifestyle_change",
+  const lifestyleTreatments = localTreatments.filter(
+    (t: Treatment) => t.treatment_type === "lifestyle_change",
   );
-  const otherTreatments = treatments.filter((t) =>
+  const otherTreatments = localTreatments.filter((t: Treatment) =>
     ["therapy", "surgery"].includes(t.treatment_type),
   );
 
@@ -392,7 +423,7 @@ export function TreatmentBlock({
               <p className="text-sm text-gray-500">暂无药物记录</p>
             </div>
           ) : (
-            medicines.map((medicine) => (
+            localMedicines.map((medicine: Medicine) => (
               <Card
                 key={medicine._id}
                 className="border border-gray-200 shadow-sm transition-shadow hover:shadow-md"
@@ -662,7 +693,7 @@ export function TreatmentBlock({
               <p className="text-sm text-gray-500">暂无生活方式干预记录</p>
             </div>
           ) : (
-            lifestyleTreatments.map((treatment) => (
+            lifestyleTreatments.map((treatment: Treatment) => (
               <Card
                 key={treatment._id}
                 className="border border-gray-200 shadow-sm transition-shadow hover:shadow-md"
@@ -742,7 +773,7 @@ export function TreatmentBlock({
               <p className="text-sm text-gray-500">暂无其他治疗记录</p>
             </div>
           ) : (
-            otherTreatments.map((treatment) => (
+            otherTreatments.map((treatment: Treatment) => (
               <Card
                 key={treatment._id}
                 className="border border-gray-200 shadow-sm transition-shadow hover:shadow-md"

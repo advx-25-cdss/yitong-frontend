@@ -24,7 +24,7 @@ import {
 import type { Patient } from "~/types";
 
 interface EHRSidebarProps {
-  patient: Patient;
+  patient: Patient | null;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -39,6 +39,35 @@ export default function EHRSidebar({
   const demographicsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const medicationsRef = useRef<HTMLDivElement>(null);
+
+  // Show loading state if patient is not yet loaded
+  if (!patient) {
+    return (
+      <div className="flex h-full flex-col border-r bg-white">
+        <div className="flex items-center justify-between border-b p-4">
+          <h2 className={`font-semibold ${collapsed ? "hidden" : ""}`}>
+            患者信息
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="h-8 w-8 p-0"
+          >
+            {collapsed ? <ChevronRight /> : <ChevronLeft />}
+          </Button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center p-4">
+            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-2"></div>
+            <p className={`text-sm text-gray-500 ${collapsed ? "hidden" : ""}`}>
+              Loading patient data...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Intersection Observer to track active section
   useEffect(() => {
@@ -115,6 +144,7 @@ export default function EHRSidebar({
   }
 
   const demographics = patient.demographics;
+  console.log(demographics);
   const age =
     new Date().getFullYear() -
     new Date(demographics.date_of_birth).getFullYear();
@@ -192,7 +222,7 @@ export default function EHRSidebar({
                 <div className="text-center">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-300 to-blue-500">
                     <span className="text-lg font-bold text-white">
-                      {demographics.first_name[0]}
+                      {demographics.first_name}
                     </span>
                   </div>
                   <h3 className="mt-2 font-medium">

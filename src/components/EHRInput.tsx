@@ -61,7 +61,7 @@ interface Surgery {
 }
 
 interface EHRInputProps {
-  patient: Patient;
+  patient: Patient | null;
 }
 
 interface WorkflowStep {
@@ -74,56 +74,54 @@ interface WorkflowStep {
 }
 
 export default function EHRInput({ patient }: EHRInputProps) {
+  console.log(patient, 'ptttttt')
   const [activeSection, setActiveSection] = useState("overview");
   const [workflowStep, setWorkflowStep] = useState(0);
 
   // State for managing component data
   const [medicines, setMedicines] = useState<Medicine[]>(
-    patient.medicines || [],
+    patient?.medicines || [],
   );
-  const [tests, setTests] = useState<Test[]>(patient.tests || []);
+  const [tests, setTests] = useState<Test[]>(patient?.tests || []);
+  console.log(tests, 'tests')
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>(
-    patient.diagnoses || [],
+    patient?.diagnoses || [],
   );
   const [treatments, setTreatments] = useState<Treatment[]>(
-    patient.treatments || [],
+    patient?.treatments || [],
   );
 
-  // Mock data for hospitalizations and surgeries
-  const [hospitalizations, setHospitalizations] = useState<Hospitalization[]>([
-    {
-      _id: "hosp1",
-      admission_date: "2023-12-01T00:00:00.000Z",
-      department: "心血管内科",
-      bed_number: "15A-203",
-      attending_doctor: "李医生",
-      admission_diagnosis: "急性冠脉综合征，需要进一步检查和治疗观察",
-      treatment_plan: [
-        "药物治疗：抗血小板聚集",
-        "监护：24小时心电监护",
-        "检查：每日血常规、心酶",
-      ],
-      status: "active",
-      notes: "",
-    },
-  ]);
+  // Update state when patient data changes
+  useEffect(() => {
+    if (patient) {
+      setMedicines(patient.medicines || []);
+      setTests(patient.tests || []);
+      setDiagnoses(patient.diagnoses || []);
+      setTreatments(patient.treatments || []);
+    }
+  }, [patient]);
 
-  const [surgeries, setSurgeries] = useState<Surgery[]>([
-    {
-      _id: "surg1",
-      surgery_name: "冠脉搭桥手术",
-      surgery_date: "2023-12-03T09:00:00.000Z",
-      surgery_room: "手术室3",
-      surgeon: "王主任",
-      anesthesia_type: "general",
-      indication: "冠状动脉严重狭窄，药物治疗效果不佳，需要手术治疗",
-      preparation: ["术前检查完成", "麻醉评估完成", "术前禁食8小时"],
-      risk_assessment: "medium",
-      status: "scheduled",
-      notes: "",
-      duration: 240,
-    },
-  ]);
+  // Show loading state if patient is not yet loaded
+  if (!patient) {
+    return (
+      <div className="flex h-full flex-col bg-white">
+        <div className="border-b p-4">
+          <h2 className="text-lg font-semibold text-gray-900">电子病历录入</h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-2"></div>
+            <p className="text-sm text-gray-500">Loading patient data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mock data for hospitalizations and surgeries
+  const [hospitalizations, setHospitalizations] = useState<Hospitalization[]>([]);
+
+  const [surgeries, setSurgeries] = useState<Surgery[]>([]);
 
   // CRUD handlers for medicines
   const handleAddMedicine = (medicine: Omit<Medicine, "_id">) => {
@@ -430,7 +428,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
               variant="outline"
               className="border-blue-200 bg-blue-100 text-blue-800"
             >
-              {patient.demographics.patient_id}
+              {patient?.demographics.patient_id}
             </Badge>
           </div>
         </div>
@@ -586,10 +584,10 @@ export default function EHRInput({ patient }: EHRInputProps) {
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between rounded border border-red-200 bg-white p-2">
                                     <span className="overflow-x-auto text-red-700">
-                                      {patient.diagnoses[0]?.diagnosis_name}
+                                      {patient?.diagnoses[0]?.diagnosis_name}
                                     </span>
                                     <Badge className="bg-red-100 text-red-800">
-                                      {patient.diagnoses[0]?.probability}%
+                                      {patient?.diagnoses[0]?.probability}%
                                     </Badge>
                                   </div>
                                 </div>
@@ -610,7 +608,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
                                       药物治疗
                                     </p>
                                     <p className="overflow-x-auto text-xs text-green-600">
-                                      {patient.medicines[0]?.medicine_name}
+                                      {patient?.medicines[0]?.medicine_name}
                                     </p>
                                   </div>
                                   <div className="rounded border border-blue-200 bg-white p-2">

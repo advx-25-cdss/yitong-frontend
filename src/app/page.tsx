@@ -69,7 +69,7 @@ export default function Home() {
         {currentScreen === "dashboard" && (
           <Dashboard onPatientSelect={handlePatientSelect} />
         )}
-        {currentScreen === "cdss" && selectedPatientId && <CDSSScreen />}
+        {currentScreen === "cdss" && selectedPatientId && <CDSSScreen patientId={selectedPatientId} />}
         {currentScreen === "cdss" && !selectedPatientId && (
           <div className="flex h-96 items-center justify-center">
             <div className="text-center">

@@ -29,7 +29,7 @@ interface ChatMessage {
 }
 
 interface ChatInterfaceProps {
-  patient: Patient;
+  patient: Patient | null;
   onPatientSelect: (patientId: string) => void;
 }
 
@@ -37,31 +37,37 @@ export default function ChatInterface({
   patient,
   onPatientSelect,
 }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      type: "system",
-      content: `已加载患者 ${patient.demographics.last_name}${patient.demographics.first_name} 的病历信息。我可以协助您进行临床决策分析。`,
-      timestamp: new Date(),
-    },
-    {
-      id: "2",
-      type: "ai",
-      content: "基于患者的症状和检查结果，我建议考虑以下诊断和检查：",
-      timestamp: new Date(),
-      suggestions: [
-        "建议心电图检查",
-        "考虑冠心病可能",
-        "评估心血管风险因素",
-        "建议血脂检查",
-      ],
-    },
-  ]);
-
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [selectedMode, setSelectedMode] = useState("诊断分析");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize messages when patient data is loaded
+  useEffect(() => {
+    if (patient) {
+      setMessages([
+        {
+          id: "1",
+          type: "system",
+          content: `已加载患者 ${patient.demographics.last_name}${patient.demographics.first_name} 的病历信息。我可以协助您进行临床决策分析。`,
+          timestamp: new Date(),
+        },
+        {
+          id: "2",
+          type: "ai",
+          content: "基于患者的症状和检查结果，我建议考虑以下诊断和检查：",
+          timestamp: new Date(),
+          suggestions: [
+            "建议心电图检查",
+            "考虑冠心病可能",
+            "评估心血管风险因素",
+            "建议血脂检查",
+          ],
+        },
+      ]);
+    }
+  }, [patient]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,7 +78,7 @@ export default function ChatInterface({
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !patient) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -217,10 +223,23 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 pr-2 pl-3">
-        <div className="space-y-4">
-          {messages.map((message, index) => {
+      {/* Loading state when patient is null */}
+      {!patient ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Loading patient data...</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Please wait while we fetch patient information
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Messages */}
+          <ScrollArea className="flex-1 pr-2 pl-3">
+            <div className="space-y-4">
+              {messages.map((message, index) => {
             const isDoctor = message.type === "user";
             const isBot = message.type === "ai";
             const isSystem = message.type === "system";
@@ -431,6 +450,8 @@ export default function ChatInterface({
           CDSS助手可以协助您进行临床决策，但不能替代医生的专业判断
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,18 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Badge } from "~/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { Modal } from "~/components/ui/modal";
 import {
   Building2,
@@ -25,7 +18,9 @@ import {
   User,
   Bed,
 } from "lucide-react";
-
+// Note: Since Hospitalization uses a custom interface that's not in the main types,
+// and there's no specific hospitalizations API, this component manages local state
+// In a real implementation, you might want to use the treatments API with a specific type
 interface Hospitalization {
   _id: string;
   admission_date: string;
@@ -40,7 +35,7 @@ interface Hospitalization {
 }
 
 interface HospitalizationBlockProps {
-  hospitalizations: Hospitalization[];
+  case_id: string;
   onAdd: (hospitalization: Omit<Hospitalization, "_id">) => void;
   onUpdate: (id: string, hospitalization: Partial<Hospitalization>) => void;
   onDelete: (id: string) => void;
@@ -71,13 +66,15 @@ const statusColors = {
 };
 
 export function HospitalizationBlock({
-  hospitalizations,
+  case_id,
   onAdd,
   onUpdate,
   onDelete,
 }: HospitalizationBlockProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [localHospitalizations, setLocalHospitalizations] = useState<Hospitalization[]>([]);
+  const [loading, setLoading] = useState(false);
   const [editForm, setEditForm] = useState<HospitalizationFormData>({
     admission_date: "",
     discharge_date: "",
@@ -100,6 +97,26 @@ export function HospitalizationBlock({
     status: "active",
     notes: "",
   });
+
+
+    // Load tests for this case
+    useEffect(() => {
+      const loadTests = async () => {
+        if (!case_id) return;
+        
+        setLoading(true);
+        try {
+          const response = await hospitalizationApi.getByCase(case_id);
+          setLocalHospitalizations(response.data.data);
+        } catch (error) {
+          console.error('Failed to load hospitalizations:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      loadTests();
+    }, [case_id]);
 
   const handleEdit = (hospitalization: Hospitalization) => {
     setEditingId(hospitalization._id);
@@ -255,7 +272,7 @@ export function HospitalizationBlock({
           <Building2 className="h-5 w-5 text-blue-600" />
           <h4 className="text-lg font-semibold text-gray-900">住院管理</h4>
           <Badge variant="outline" className="text-gray-600">
-            {hospitalizations.length} 项
+            {localHospitalizations.length} 项
           </Badge>
         </div>
         <Button
@@ -271,14 +288,14 @@ export function HospitalizationBlock({
 
       {/* Hospitalization List */}
       <div className="space-y-4">
-        {hospitalizations.length === 0 ? (
+        {localHospitalizations.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-200 py-12 text-center">
             <Building2 className="mx-auto mb-3 h-8 w-8 text-gray-400" />
             <p className="mb-2 text-gray-500">暂无住院记录</p>
             <p className="text-sm text-gray-400">点击上方按钮添加住院记录</p>
           </div>
         ) : (
-          hospitalizations.map((hospitalization) => (
+          localHospitalizations.map((hospitalization) => (
             <Card
               key={hospitalization._id}
               className="border border-gray-200 shadow-sm transition-shadow hover:shadow-md"

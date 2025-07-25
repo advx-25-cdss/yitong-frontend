@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -24,8 +24,10 @@ import {
   Calendar,
 } from "lucide-react";
 import type { Diagnosis } from "~/types";
+import { diagnosesApi } from "~/lib/api";
 
 interface DiagnosisBlockProps {
+  case_id: string;
   diagnoses: Diagnosis[];
   onAdd: (diagnosis: Omit<Diagnosis, "_id">) => void;
   onUpdate: (id: string, diagnosis: Partial<Diagnosis>) => void;
@@ -54,6 +56,7 @@ const statusColors = {
 };
 
 export function DiagnosisBlock({
+  case_id,
   diagnoses,
   onAdd,
   onUpdate,
@@ -61,6 +64,8 @@ export function DiagnosisBlock({
 }: DiagnosisBlockProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [localDiagnoses, setLocalDiagnoses] = useState<Diagnosis[]>(diagnoses);
   const [editForm, setEditForm] = useState<DiagnosisFormData>({
     diagnosis_name: "",
     diagnosis_date: "",
@@ -78,8 +83,32 @@ export function DiagnosisBlock({
     additional_info: "",
   });
 
+  // Load diagnoses for this case
+  useEffect(() => {
+    const loadDiagnoses = async () => {
+      if (!case_id) return;
+      
+      setLoading(true);
+      try {
+        const response = await diagnosesApi.getByCase(case_id);
+        setLocalDiagnoses(response.data.data);
+      } catch (error) {
+        console.error('Failed to load diagnoses:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDiagnoses();
+  }, [case_id]);
+
+  // Update local state when props change
+  useEffect(() => {
+    setLocalDiagnoses(diagnoses);
+  }, [diagnoses]);
+
   // Only allow one diagnosis
-  const currentDiagnosis = diagnoses[0] ?? null;
+  const currentDiagnosis = localDiagnoses[0] ?? null;
 
   const handleEdit = (diagnosis: Diagnosis) => {
     setEditingId(diagnosis._id);
@@ -94,14 +123,25 @@ export function DiagnosisBlock({
     });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingId) {
       const updatedDiagnosis = {
         ...editForm,
         diagnosis_date: new Date(editForm.diagnosis_date),
       };
-      onUpdate(editingId, updatedDiagnosis);
-      setEditingId(null);
+      
+      try {
+        const response = await diagnosesApi.update(editingId, updatedDiagnosis);
+        const updated = response.data;
+        setLocalDiagnoses(prev => 
+          prev.map(diag => diag._id === editingId ? updated : diag)
+        );
+        onUpdate(editingId, updatedDiagnosis);
+        setEditingId(null);
+      } catch (error) {
+        console.error('Failed to update diagnosis:', error);
+        alert('更新诊断失败，请重试');
+      }
     }
   };
 
@@ -117,7 +157,7 @@ export function DiagnosisBlock({
     });
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (addForm.diagnosis_name && addForm.diagnosis_date && addForm.follow_up) {
       const newDiagnosis = {
         diagnosis_name: addForm.diagnosis_name,
@@ -126,27 +166,43 @@ export function DiagnosisBlock({
         follow_up: addForm.follow_up,
         notes: addForm.notes,
         additional_info: addForm.additional_info,
-        case_id: "", // These will be set by the parent component
-        patient_id: "",
+        case_id: case_id,
+        patient_id: "", // This should be provided by the parent component
         created_at: new Date(),
         updated_at: new Date(),
       };
-      onAdd(newDiagnosis);
-      setAddForm({
-        diagnosis_name: "",
-        diagnosis_date: new Date().toISOString().split("T")[0] ?? "",
-        status: "active",
-        follow_up: "",
-        notes: "",
-        additional_info: "",
-      });
-      setIsAddModalOpen(false);
+      
+      try {
+        const response = await diagnosesApi.create(newDiagnosis);
+        const created = response.data;
+        setLocalDiagnoses(prev => [...prev, created]);
+        onAdd(newDiagnosis);
+        setAddForm({
+          diagnosis_name: "",
+          diagnosis_date: new Date().toISOString().split("T")[0] ?? "",
+          status: "active",
+          follow_up: "",
+          notes: "",
+          additional_info: "",
+        });
+        setIsAddModalOpen(false);
+      } catch (error) {
+        console.error('Failed to create diagnosis:', error);
+        alert('创建诊断失败，请重试');
+      }
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("确定要删除这个诊断吗？")) {
-      onDelete(id);
+      try {
+        await diagnosesApi.delete(id);
+        setLocalDiagnoses(prev => prev.filter(diag => diag._id !== id));
+        onDelete(id);
+      } catch (error) {
+        console.error('Failed to delete diagnosis:', error);
+        alert('删除诊断失败，请重试');
+      }
     }
   };
 
@@ -176,7 +232,12 @@ export function DiagnosisBlock({
 
       {/* Diagnosis Content */}
       <div>
-        {!currentDiagnosis ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
+            <span className="ml-2 text-gray-500">加载诊断数据...</span>
+          </div>
+        ) : !currentDiagnosis ? (
           // Empty state
           <div className="rounded-lg border-2 border-dashed border-gray-200 py-12 text-center">
             <Stethoscope className="mx-auto mb-3 h-8 w-8 text-gray-400" />
