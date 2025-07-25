@@ -88,7 +88,7 @@ export default function CDSSScreen() {
             {/* Transcription Area */}
             <div
               className={`transition-all duration-600 ease-in-out ${
-                transcriptionExpanded ? "h-3/4" : "h-[160px]"
+                transcriptionExpanded ? "h-3/4" : "h-[80px]"
               } border-b`}
               onMouseEnter={() => setTranscriptionExpanded(true)}
               onMouseLeave={() => setTranscriptionExpanded(false)}
