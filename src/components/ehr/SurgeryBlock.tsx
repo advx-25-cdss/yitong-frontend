@@ -108,7 +108,7 @@ export function SurgeryBlock({
 }: SurgeryBlockProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [localSurgeries, setLocalSurgeries] = useState<Surgery[]>(surgeries);
+  const [localSurgeries, setLocalSurgeries] = useState<Surgery[]>([]);
   const [editForm, setEditForm] = useState<SurgeryFormData>({
     surgery_name: "",
     surgery_date: "",
@@ -137,9 +137,9 @@ export function SurgeryBlock({
   });
 
   // Update local state when props change
-  useEffect(() => {
-    setLocalSurgeries(surgeries);
-  }, [surgeries]);
+  // useEffect(() => {
+  //   setLocalSurgeries(surgeries);
+  // }, [surgeries]);
 
   const handleEdit = (surgery: Surgery) => {
     setEditingId(surgery._id);

@@ -65,7 +65,7 @@ export function DiagnosisBlock({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [localDiagnoses, setLocalDiagnoses] = useState<Diagnosis[]>(diagnoses);
+  const [localDiagnoses, setLocalDiagnoses] = useState<Diagnosis[]>([]);
   const [editForm, setEditForm] = useState<DiagnosisFormData>({
     diagnosis_name: "",
     diagnosis_date: "",
@@ -103,12 +103,13 @@ export function DiagnosisBlock({
   }, [case_id]);
 
   // Update local state when props change
-  useEffect(() => {
-    setLocalDiagnoses(diagnoses);
-  }, [diagnoses]);
+  // useEffect(() => {
+  //   setLocalDiagnoses(diagnoses);
+  // }, [diagnoses]);
 
   // Only allow one diagnosis
-  const currentDiagnosis = localDiagnoses[0] ?? null;
+  console.log("Local Diagnoses:", localDiagnoses);
+  const currentDiagnosis = localDiagnoses?.[0] ?? null;
 
   const handleEdit = (diagnosis: Diagnosis) => {
     setEditingId(diagnosis._id);

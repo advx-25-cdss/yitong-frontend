@@ -106,8 +106,8 @@ export function HospitalizationBlock({
         
         setLoading(true);
         try {
-          const response = await hospitalizationApi.getByCase(case_id);
-          setLocalHospitalizations(response.data.data);
+          // const response = await hospitalizationApi.getByCase(case_id);
+          // setLocalHospitalizations(response.data.data);
         } catch (error) {
           console.error('Failed to load hospitalizations:', error);
         } finally {

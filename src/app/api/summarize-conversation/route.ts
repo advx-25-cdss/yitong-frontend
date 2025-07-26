@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Forward the request to Flask backend
+    // Forward the request to FastAPI backend
     const response = await fetch(
       `${FLASK_BACKEND_URL}/summarize-conversation`,
       {
@@ -21,13 +21,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (!response.ok) {
-      throw new Error(`Flask backend responded with ${response.status}`);
+      throw new Error(`FastAPI backend responded with ${response.status}`);
     }
 
     const result = await response.json();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error forwarding to Flask backend:", error);
+    console.error("Error forwarding to FastAPI backend:", error);
     return NextResponse.json(
       { error: "Failed to summarize conversation" },
       { status: 500 },

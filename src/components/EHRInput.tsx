@@ -77,6 +77,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
   console.log(patient, 'ptttttt')
   const [activeSection, setActiveSection] = useState("overview");
   const [workflowStep, setWorkflowStep] = useState(0);
+  const [caseId, setCaseId] = useState<string | null>(patient?.cases[0]?._id || '');
 
   // State for managing component data
   const [medicines, setMedicines] = useState<Medicine[]>(
@@ -649,7 +650,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
             className="bg-purple-25/30 space-y-4 border-t p-4"
           >
             <TestBlock
-              tests={tests}
+              case_id={caseId}
               onAdd={handleAddTest}
               onUpdate={handleUpdateTest}
               onDelete={handleDeleteTest}
@@ -662,7 +663,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
             className="bg-red-25/30 space-y-4 border-t p-4"
           >
             <DiagnosisBlock
-              diagnoses={diagnoses}
+              case_id={caseId}
               onAdd={handleAddDiagnosis}
               onUpdate={handleUpdateDiagnosis}
               onDelete={handleDeleteDiagnosis}
@@ -692,7 +693,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
             className="bg-blue-25/30 space-y-4 border-t p-4"
           >
             <HospitalizationBlock
-              hospitalizations={hospitalizations}
+              case_id={caseId}
               onAdd={handleAddHospitalization}
               onUpdate={handleUpdateHospitalization}
               onDelete={handleDeleteHospitalization}
@@ -705,7 +706,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
             className="bg-orange-25/30 space-y-4 border-t p-4"
           >
             <SurgeryBlock
-              surgeries={surgeries}
+              case_id={caseId}
               onAdd={handleAddSurgery}
               onUpdate={handleUpdateSurgery}
               onDelete={handleDeleteSurgery}
