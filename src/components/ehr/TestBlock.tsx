@@ -19,6 +19,7 @@ import {
   Calendar,
   Loader2,
   FileImage,
+  RefreshCcw,
 } from "lucide-react";
 import type { Test } from "~/types";
 import { testsApi } from "~/lib/api";
@@ -92,6 +93,19 @@ export function TestBlock({
 
     loadTests();
   }, [case_id]);
+
+  async function reloadData() {
+    setLoading(true);
+    try {
+      const response = await testsApi.getByCase(case_id);
+      setLocalTests(response.data.data);
+    } catch (error) {
+      console.error("Failed to reload tests:", error);
+      alert("重新加载检查失败，请重试");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleEdit = (test: Test) => {
     setEditingId(test._id);
@@ -320,6 +334,10 @@ export function TestBlock({
         >
           <Plus className="mr-2 h-4 w-4" />
           添加检查
+        </Button>
+        <Button size="sm" variant="outline" onClick={reloadData}>
+          <RefreshCcw className="mr-2 h-4 w-4" />
+          重置检查
         </Button>
       </div>
 

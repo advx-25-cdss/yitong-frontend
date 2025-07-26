@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Modal } from "~/components/ui/modal";
-import { Pill, Edit, Trash2, Plus, Save, X } from "lucide-react";
+import { Pill, Edit, Trash2, Plus, Save, X, RefreshCcw } from "lucide-react";
 import type { Medicine } from "~/types";
 import { medicinesApi } from "~/lib/api";
 
@@ -90,6 +90,18 @@ export function MedicineBlock({
 
     loadMedicines();
   }, [case_id]);
+
+  async function reloadData() {
+    setLoading(true);
+    try {
+      const response = await medicinesApi.getByCase(case_id);
+      setLocalMedicines(response.data.data);
+    } catch (error) {
+      console.error("Failed to reload medicines:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleEdit = (medicine: Medicine) => {
     setEditingId(medicine._id);
@@ -188,6 +200,10 @@ export function MedicineBlock({
         >
           <Plus className="mr-1 h-3 w-3" />
           添加药物
+        </Button>
+        <Button size="sm" variant="outline" onClick={reloadData}>
+          <RefreshCcw className="mr-2 h-4 w-4" />
+          重置药物
         </Button>
       </div>
 

@@ -317,7 +317,7 @@ export default function ChatInterface({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => cdssApi.getRecommendedTests(caseId)}
+                    onClick={() => cdssApi.getRecommendedTests(caseId).then(num => alert(`推荐检查数量: ${num.data}`))}
                     className={`flex h-7 items-center space-x-1 px-2 text-xs select-none cursor-pointer bg-transparent text-gray-600`}
                   >
                     <TestTube className="h-3 w-3" />
@@ -326,7 +326,7 @@ export default function ChatInterface({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedMode("诊断分析")}
+                    onClick={() => startConversation()}
                     className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
                       conversationId
                         ? "cursor-default bg-gray-800 text-white"
@@ -339,7 +339,7 @@ export default function ChatInterface({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => cdssApi.getRecommendedTreatments(caseId)}
+                    onClick={() => cdssApi.getRecommendedTreatments(caseId).then(num => alert(`推荐治疗数量: ${num.data}`))}
                     className={`flex h-7 items-center space-x-1 px-2 text-xs select-none cursor-pointer bg-transparent text-gray-600`}
                   >
                     <Pill className="h-3 w-3" />

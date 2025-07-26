@@ -25,6 +25,7 @@ import {
   Heart,
   Activity,
   Calendar,
+  RefreshCcw,
 } from "lucide-react";
 import type { Medicine, Treatment } from "~/types";
 import { treatmentsApi } from "~/lib/api";
