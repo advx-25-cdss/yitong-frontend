@@ -26,7 +26,6 @@ export const getPatientsList = async (): Promise<Demographics[]> => {
 export const getPatientDemographics = async (patientId: string): Promise<Demographics | null> => {
   try {
     const response = await demographicsApi.getByPatient(patientId);
-    console.log(response, 'demographics response');
     return response.data;
   } catch (error) {
     console.error(`Failed to fetch demographics for patient ${patientId}:`, error);
@@ -115,8 +114,6 @@ export const getPatientHistoryPresentIllness = async (patientId: string) => {
 export const getPatientById = async (patientId: string): Promise<Patient | null> => {
   try {
     const result = await patientApi.getPatientById(patientId);
-
-    console.log(result, 'another')
     return result
   } catch (error) {
     console.error(`Failed to fetch patient ${patientId} from API:`, error);
@@ -142,8 +139,6 @@ export const getDashboardStats = async () => {
       casesApi.getAll(),
       diagnosesApi.getStatistics().catch(() => ({ data: null })),
     ]);
-
-    console.log(patients, allCases, diagnosesStats);
 
     const patientsData = patients.status === 'fulfilled' ? patients.value : [];
     const casesData = allCases.status === 'fulfilled' ? allCases.value.data.data : [];

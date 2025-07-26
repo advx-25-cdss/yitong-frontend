@@ -144,7 +144,6 @@ export default function EHRSidebar({
   }
 
   const demographics = patient.demographics;
-  console.log(demographics);
   const age =
     new Date().getFullYear() -
     new Date(demographics.date_of_birth).getFullYear();

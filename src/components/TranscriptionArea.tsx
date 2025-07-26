@@ -6,18 +6,10 @@ import { Badge } from "~/components/ui/badge";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Mic, Play, Pause, Square, FileText, Clock } from "lucide-react";
 import type { Patient } from "~/types";
-import { AudioTranscriber } from "~/lib/transcribe";
+import { TransformersAudioTranscriber, type TranscriptionSegment } from "~/lib/transformersTranscribe";
 import { AudioRecorder, useAudioRecorder } from 'react-audio-voice-recorder';
 
 // Types
-interface TranscriptionSegment {
-  id: string;
-  speaker: "doctor" | "patient";
-  text: string;
-  timestamp: string;
-  startTime: number;
-  endTime: number;
-}
 
 interface TranscriptionAreaProps {
   patient: Patient;
@@ -31,40 +23,41 @@ interface TranscriptionAreaProps {
 function useAudioRecording() {
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
+  const [transcriber] = useState(() => new TransformersAudioTranscriber());
 
-  const transcriber = new AudioTranscriber("ws://localhost:8080/ws/transcribe");
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    
+    if (isRecording) {
+      intervalId = setInterval(() => {
+        setDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      setDuration(0);
+    }
 
-  
-  function toggleRecording() {
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isRecording]);
+
+  async function toggleRecording() {
     if (isRecording) {
       transcriber.stopTranscription();
+      setIsRecording(false);
     } else {
-      transcriber.startTranscription();
+      await transcriber.startTranscription();
+      setIsRecording(true);
     }
-    setIsRecording(!isRecording);
   }
-
-  const requestConversationSummary = async () => {
-    try {
-      await fetch("/api/summarize-conversation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          timestamp: Date.now(),
-          action: "summarize",
-        }),
-      });
-    } catch (error) {
-      console.error("Error requesting summary:", error);
-    }
-  };
 
   return {
     isRecording,
     duration,
     toggleRecording,
+    transcriber,
   };
 }
 
@@ -272,29 +265,19 @@ export default function TranscriptionArea({
   const [transcriptionSegments, setTranscriptionSegments] = useState<
     TranscriptionSegment[]
   >([]);
-  const { isRecording, duration, toggleRecording } = useAudioRecording();
+  const { isRecording, duration, toggleRecording, transcriber } = useAudioRecording();
 
-  // Listen for real-time transcription updates via WebSocket or polling
-  // useEffect(() => {
-  //   if (!isRecording) return;
+  // Set up real-time transcription updates
+  useEffect(() => {
+    transcriber.setOnTranscriptionUpdate((segments) => {
+      setTranscriptionSegments(segments);
+    });
 
-  //   // const pollForTranscription = async () => {
-  //   //   try {
-  //   //     const response = await fetch("/api/get-latest-transcription");
-  //   //     if (response.ok) {
-  //   //       const data = await response.json();
-  //   //       if (data.segments) {
-  //   //         setTranscriptionSegments(data.segments);
-  //   //       }
-  //   //     }
-  //   //   } catch (error) {
-  //   //     console.error("Error polling for transcription:", error);
-  //   //   }
-  //   // };
-
-  //   // const interval = setInterval(pollForTranscription, 500);
-  //   return () => clearInterval(interval);
-  // }, [isRecording]);
+    // Cleanup on unmount
+    return () => {
+      transcriber.terminate();
+    };
+  }, [transcriber]);
 
   const hasContent = transcriptionSegments.length > 0;
 

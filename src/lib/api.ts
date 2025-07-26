@@ -356,8 +356,6 @@ export const patientApi = {
         treatmentsApi.getByPatient(patientId),
       ]);
 
-      console.log(casesResponse, testsResponse, medicinesResponse, diagnosesResponse, treatmentsResponse);
-
       const demographics = demographicsResponse.status === 'fulfilled' ? demographicsResponse.value.data[0] : null;
       const vitals = vitalsResponse.status === 'fulfilled' ? vitalsResponse.value.data : [];
       const hpi = hpiResponse.status === 'fulfilled' ? hpiResponse.value.data[0] : undefined;
@@ -369,8 +367,6 @@ export const patientApi = {
       const medicines = medicinesResponse.status === 'fulfilled' ? medicinesResponse.value.data.data : [];
       const diagnoses = diagnosesResponse.status === 'fulfilled' ? diagnosesResponse.value.data.data : [];
       const treatments = treatmentsResponse.status === 'fulfilled' ? treatmentsResponse.value.data.data : [];
-
-      console.log(demographics, vitals, hpi, pmh, medicationHistory, allergyHistory, cases, tests, medicines, diagnoses, treatments);
 
       if (!demographics) {
         throw new Error(`Patient with ID ${patientId} not found`);

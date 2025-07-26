@@ -74,7 +74,6 @@ interface WorkflowStep {
 }
 
 export default function EHRInput({ patient }: EHRInputProps) {
-  console.log(patient, 'ptttttt')
   const [activeSection, setActiveSection] = useState("overview");
   const [workflowStep, setWorkflowStep] = useState(0);
   const [caseId, setCaseId] = useState<string | null>(patient?.cases[0]?._id || '');
@@ -84,7 +83,6 @@ export default function EHRInput({ patient }: EHRInputProps) {
     patient?.medicines || [],
   );
   const [tests, setTests] = useState<Test[]>(patient?.tests || []);
-  console.log(tests, 'tests')
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>(
     patient?.diagnoses || [],
   );
