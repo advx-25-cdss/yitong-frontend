@@ -154,7 +154,7 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
   // Handle loading state
   if (loading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 px-4 py-6">
         {/* Loading Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
