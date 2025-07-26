@@ -12,15 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { Users, Activity, Clock, TrendingUp, Search, Eye } from "lucide-react";
 import {
-  Users,
-  Activity,
-  Clock,
-  TrendingUp,
-  Search,
-  Eye,
-} from "lucide-react";
-import { getPatientsList, getDashboardStats, getPatientById } from "~/lib/dataService";
+  getPatientsList,
+  getDashboardStats,
+  getPatientById,
+} from "~/lib/dataService";
 import type { Patient, Demographics } from "~/types";
 
 interface DashboardProps {
@@ -33,8 +30,12 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
     "all" | "open" | "in_progress" | "closed"
   >("all");
   const [patientsList, setPatientsList] = useState<Demographics[]>([]);
-  const [patientsData, setPatientsData] = useState<Map<string, Patient>>(new Map());
-  const [loadingPatients, setLoadingPatients] = useState<Set<string>>(new Set());
+  const [patientsData, setPatientsData] = useState<Map<string, Patient>>(
+    new Map(),
+  );
+  const [loadingPatients, setLoadingPatients] = useState<Set<string>>(
+    new Set(),
+  );
   const [stats, setStats] = useState({
     totalPatients: 0,
     todayEncounters: 0,
@@ -60,8 +61,8 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
         setStats(statsData);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again.');
+        console.error("Failed to fetch dashboard data:", err);
+        setError("Failed to load dashboard data. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -71,7 +72,9 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
   }, []);
 
   // Function to load full patient data on-demand
-  const loadPatientData = async (patientId: string): Promise<Patient | null> => {
+  const loadPatientData = async (
+    patientId: string,
+  ): Promise<Patient | null> => {
     // Return cached data if available
     if (patientsData.has(patientId)) {
       return patientsData.get(patientId)!;
@@ -83,19 +86,19 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
     }
 
     try {
-      setLoadingPatients(prev => new Set(prev).add(patientId));
+      setLoadingPatients((prev) => new Set(prev).add(patientId));
       const patientData = await getPatientById(patientId);
-      
+
       if (patientData) {
-        setPatientsData(prev => new Map(prev).set(patientId, patientData));
+        setPatientsData((prev) => new Map(prev).set(patientId, patientData));
       }
-      
+
       return patientData;
     } catch (error) {
       console.error(`Failed to load patient data for ${patientId}:`, error);
       return null;
     } finally {
-      setLoadingPatients(prev => {
+      setLoadingPatients((prev) => {
         const newSet = new Set(prev);
         newSet.delete(patientId);
         return newSet;
@@ -106,21 +109,16 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
   const filteredPatients = useMemo((): Demographics[] => {
     return patientsList.filter((patient) => {
       const matchesSearch =
-        patient.first_name
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        patient.last_name
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        patient.patient_id
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
+        patient.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.patient_id.toLowerCase().includes(searchTerm.toLowerCase());
 
       // For status filtering, we need to check if we have the patient data loaded
       const patientData = patientsData.get(patient.patient_id);
       const matchesStatus =
-        statusFilter === "all" || 
-        (patientData && patientData.cases.some((c) => c.status === statusFilter));
+        statusFilter === "all" ||
+        (patientData &&
+          patientData.cases.some((c) => c.status === statusFilter));
 
       return matchesSearch && (statusFilter === "all" || matchesStatus);
     });
@@ -162,12 +160,12 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="h-4 w-20 animate-pulse bg-gray-200 rounded"></div>
-                <div className="h-4 w-4 animate-pulse bg-gray-200 rounded"></div>
+                <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                <div className="h-4 w-4 animate-pulse rounded bg-gray-200"></div>
               </CardHeader>
               <CardContent>
-                <div className="h-8 w-16 animate-pulse bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 w-24 animate-pulse bg-gray-200 rounded"></div>
+                <div className="mb-2 h-8 w-16 animate-pulse rounded bg-gray-200"></div>
+                <div className="h-3 w-24 animate-pulse rounded bg-gray-200"></div>
               </CardContent>
             </Card>
           ))}
@@ -176,16 +174,16 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
         {/* Loading Table */}
         <Card>
           <CardHeader>
-            <div className="h-6 w-32 animate-pulse bg-gray-200 rounded"></div>
+            <div className="h-6 w-32 animate-pulse rounded bg-gray-200"></div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center space-x-4">
-                  <div className="h-4 w-20 animate-pulse bg-gray-200 rounded"></div>
-                  <div className="h-4 w-32 animate-pulse bg-gray-200 rounded"></div>
-                  <div className="h-4 w-24 animate-pulse bg-gray-200 rounded"></div>
-                  <div className="h-4 w-16 animate-pulse bg-gray-200 rounded"></div>
+                  <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                  <div className="h-4 w-32 animate-pulse rounded bg-gray-200"></div>
+                  <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
+                  <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
                 </div>
               ))}
             </div>
@@ -201,12 +199,11 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 text-red-400">⚠️</div>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading dashboard</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            Error loading dashboard
+          </h3>
           <p className="mt-1 text-sm text-gray-500">{error}</p>
-          <Button 
-            className="mt-4" 
-            onClick={() => window.location.reload()}
-          >
+          <Button className="mt-4" onClick={() => window.location.reload()}>
             Retry
           </Button>
         </div>
@@ -225,9 +222,7 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
             <Users className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {stats.totalPatients}
-            </div>
+            <div className="text-3xl font-bold">{stats.totalPatients}</div>
             <p className="text-muted-foreground text-xs">+2 from yesterday</p>
           </CardContent>
         </Card>
@@ -240,9 +235,7 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
             <Activity className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {stats.todayEncounters}
-            </div>
+            <div className="text-3xl font-bold">{stats.todayEncounters}</div>
             <p className="text-muted-foreground text-xs">+1 from yesterday</p>
           </CardContent>
         </Card>
@@ -270,9 +263,7 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
             <Clock className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {stats.avgResponseTime}
-            </div>
+            <div className="text-3xl font-bold">{stats.avgResponseTime}</div>
             <p className="text-muted-foreground text-xs">
               -0.5s from last week
             </p>
@@ -338,8 +329,10 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                 {filteredPatients.map((patient) => {
                   const patientData = patientsData.get(patient.patient_id);
                   const isLoading = loadingPatients.has(patient.patient_id);
-                  const latestVital = patientData?.vitals[patientData.vitals.length - 1];
-                  const latestCase = patientData?.cases[patientData.cases.length - 1];
+                  const latestVital =
+                    patientData?.vitals[patientData.vitals.length - 1];
+                  const latestCase =
+                    patientData?.cases[patientData.cases.length - 1];
 
                   return (
                     <tr
@@ -361,14 +354,9 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                               {patient.last_name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {patient.gender === "male"
-                                ? "男"
-                                : "女"}{" "}
-                              •{" "}
+                              {patient.gender === "male" ? "男" : "女"} •{" "}
                               {new Date().getFullYear() -
-                                new Date(
-                                  patient.date_of_birth,
-                                ).getFullYear()}
+                                new Date(patient.date_of_birth).getFullYear()}
                               岁
                             </div>
                           </div>
@@ -379,17 +367,18 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
                         <div className="text-sm">
                           <div className="font-medium text-gray-900">
                             {isLoading ? (
-                              <div className="h-4 w-32 animate-pulse bg-gray-200 rounded"></div>
+                              <div className="h-4 w-32 animate-pulse rounded bg-gray-200"></div>
                             ) : (
-                              patientData?.historyPresentIllness?.chief_complaint ??
-                              "无主诉"
+                              (patientData?.historyPresentIllness
+                                ?.chief_complaint ?? "无主诉")
                             )}
                           </div>
                           <div className="text-gray-500">
                             {isLoading ? (
-                              <div className="h-3 w-16 animate-pulse bg-gray-200 rounded mt-1"></div>
+                              <div className="mt-1 h-3 w-16 animate-pulse rounded bg-gray-200"></div>
                             ) : (
-                              patientData?.historyPresentIllness?.duration ?? ""
+                              (patientData?.historyPresentIllness?.duration ??
+                              "")
                             )}
                           </div>
                         </div>
@@ -397,7 +386,7 @@ export default function Dashboard({ onPatientSelect }: DashboardProps) {
 
                       <td className="px-4 py-4">
                         {isLoading ? (
-                          <div className="h-6 w-12 animate-pulse bg-gray-200 rounded"></div>
+                          <div className="h-6 w-12 animate-pulse rounded bg-gray-200"></div>
                         ) : (
                           <Badge
                             className={getPriorityColor(

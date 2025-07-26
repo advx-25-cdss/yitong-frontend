@@ -6,8 +6,11 @@ import { Badge } from "~/components/ui/badge";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Mic, Play, Pause, Square, FileText, Clock } from "lucide-react";
 import type { Patient } from "~/types";
-import { TransformersAudioTranscriber, type TranscriptionSegment } from "~/lib/transformersTranscribe";
-import { AudioRecorder, useAudioRecorder } from 'react-audio-voice-recorder';
+import {
+  TransformersAudioTranscriber,
+  type TranscriptionSegment,
+} from "~/lib/transformersTranscribe";
+import { AudioRecorder, useAudioRecorder } from "react-audio-voice-recorder";
 
 // Types
 
@@ -27,10 +30,10 @@ function useAudioRecording() {
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
-    
+
     if (isRecording) {
       intervalId = setInterval(() => {
-        setDuration(prev => prev + 1);
+        setDuration((prev) => prev + 1);
       }, 1000);
     } else {
       setDuration(0);
@@ -80,8 +83,8 @@ function RecordingHeader({
   };
 
   return (
-    <div className="border-b bg-gradient-to-r from-white to-blue-50 p-4 z-500">
-      <div className="flex items-center justify-between"> 
+    <div className="z-500 border-b bg-gradient-to-r from-white to-blue-50 p-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <FileText className="h-5 w-5 text-blue-600" />
           <div>
@@ -129,7 +132,7 @@ function RecordingHeader({
 
 function EmptyState({ onStart }: { onStart: () => void }) {
   return (
-    <div className="flex items-center justify-center z-100 p-4">
+    <div className="z-100 flex items-center justify-center p-4">
       <div className="space-y-4 text-center">
         <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
           <Mic className="h-5 w-5 text-gray-400" />
@@ -265,7 +268,8 @@ export default function TranscriptionArea({
   const [transcriptionSegments, setTranscriptionSegments] = useState<
     TranscriptionSegment[]
   >([]);
-  const { isRecording, duration, toggleRecording, transcriber } = useAudioRecording();
+  const { isRecording, duration, toggleRecording, transcriber } =
+    useAudioRecording();
 
   // Set up real-time transcription updates
   useEffect(() => {

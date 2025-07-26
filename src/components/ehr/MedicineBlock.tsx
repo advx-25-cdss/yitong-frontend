@@ -76,13 +76,13 @@ export function MedicineBlock({
   useEffect(() => {
     const loadMedicines = async () => {
       if (!case_id) return;
-      
+
       setLoading(true);
       try {
         const response = await medicinesApi.getByCase(case_id);
         setLocalMedicines(response.data.data);
       } catch (error) {
-        console.error('Failed to load medicines:', error);
+        console.error("Failed to load medicines:", error);
       } finally {
         setLoading(false);
       }
@@ -90,7 +90,6 @@ export function MedicineBlock({
 
     loadMedicines();
   }, [case_id]);
-
 
   const handleEdit = (medicine: Medicine) => {
     setEditingId(medicine._id);
@@ -108,14 +107,14 @@ export function MedicineBlock({
       try {
         const response = await medicinesApi.update(editingId, editForm);
         const updatedMedicine = response.data;
-        setLocalMedicines(prev => 
-          prev.map(med => med._id === editingId ? updatedMedicine : med)
+        setLocalMedicines((prev) =>
+          prev.map((med) => (med._id === editingId ? updatedMedicine : med)),
         );
         onUpdate(editingId, editForm);
         setEditingId(null);
       } catch (error) {
-        console.error('Failed to update medicine:', error);
-        alert('更新药物失败，请重试');
+        console.error("Failed to update medicine:", error);
+        alert("更新药物失败，请重试");
       }
     }
   };
@@ -145,7 +144,7 @@ export function MedicineBlock({
       try {
         const response = await medicinesApi.create(newMedicine);
         const createdMedicine = response.data;
-        setLocalMedicines(prev => [...prev, createdMedicine]);
+        setLocalMedicines((prev) => [...prev, createdMedicine]);
         onAdd(newMedicine);
         setAddForm({
           medicine_name: "",
@@ -156,8 +155,8 @@ export function MedicineBlock({
         });
         setIsAddModalOpen(false);
       } catch (error) {
-        console.error('Failed to create medicine:', error);
-        alert('创建药物失败，请重试');
+        console.error("Failed to create medicine:", error);
+        alert("创建药物失败，请重试");
       }
     }
   };
@@ -166,11 +165,11 @@ export function MedicineBlock({
     if (confirm("确定要删除这个药物吗？")) {
       try {
         await medicinesApi.delete(id);
-        setLocalMedicines(prev => prev.filter(med => med._id !== id));
+        setLocalMedicines((prev) => prev.filter((med) => med._id !== id));
         onDelete(id);
       } catch (error) {
-        console.error('Failed to delete medicine:', error);
-        alert('删除药物失败，请重试');
+        console.error("Failed to delete medicine:", error);
+        alert("删除药物失败，请重试");
       }
     }
   };
@@ -235,13 +234,20 @@ export function MedicineBlock({
                         placeholder="用药频次"
                         value={editForm.frequency}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setEditForm({ ...editForm, frequency: e.target.value })
+                          setEditForm({
+                            ...editForm,
+                            frequency: e.target.value,
+                          })
                         }
                       />
                       <Select
                         value={editForm.route}
                         onValueChange={(
-                          value: "oral" | "injection" | "topical" | "inhalation",
+                          value:
+                            | "oral"
+                            | "injection"
+                            | "topical"
+                            | "inhalation",
                         ) => setEditForm({ ...editForm, route: value })}
                       >
                         <SelectTrigger>

@@ -40,7 +40,7 @@ export interface HistoryPresentIllness {
   patient_id: string;
   chief_complaint: string;
   history_of_present_illness: string;
-  onset?: 'sudden' | 'gradual';
+  onset?: "sudden" | "gradual";
   duration?: string;
   severity?: number;
   quality?: string;

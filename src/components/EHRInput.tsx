@@ -76,7 +76,9 @@ interface WorkflowStep {
 export default function EHRInput({ patient }: EHRInputProps) {
   const [activeSection, setActiveSection] = useState("overview");
   const [workflowStep, setWorkflowStep] = useState(0);
-  const [caseId, setCaseId] = useState<string>((patient?.cases[0]?._id || '') ?? '');
+  const [caseId, setCaseId] = useState<string>(
+    (patient?.cases[0]?._id || "") ?? "",
+  );
 
   // State for managing component data
   const [medicines, setMedicines] = useState<Medicine[]>(
@@ -107,9 +109,9 @@ export default function EHRInput({ patient }: EHRInputProps) {
         <div className="border-b p-4">
           <h2 className="text-lg font-semibold text-gray-900">电子病历录入</h2>
         </div>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-2"></div>
+            <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
             <p className="text-sm text-gray-500">Loading patient data...</p>
           </div>
         </div>
@@ -118,7 +120,9 @@ export default function EHRInput({ patient }: EHRInputProps) {
   }
 
   // Mock data for hospitalizations and surgeries
-  const [hospitalizations, setHospitalizations] = useState<Hospitalization[]>([]);
+  const [hospitalizations, setHospitalizations] = useState<Hospitalization[]>(
+    [],
+  );
 
   const [surgeries, setSurgeries] = useState<Surgery[]>([]);
 

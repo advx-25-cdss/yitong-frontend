@@ -85,13 +85,13 @@ export function DiagnosisBlock({
   useEffect(() => {
     const loadDiagnoses = async () => {
       if (!case_id) return;
-      
+
       setLoading(true);
       try {
         const response = await diagnosesApi.getByCase(case_id);
         setLocalDiagnoses(response.data.data);
       } catch (error) {
-        console.error('Failed to load diagnoses:', error);
+        console.error("Failed to load diagnoses:", error);
       } finally {
         setLoading(false);
       }
@@ -128,18 +128,18 @@ export function DiagnosisBlock({
         ...editForm,
         diagnosis_date: new Date(editForm.diagnosis_date),
       };
-      
+
       try {
         const response = await diagnosesApi.update(editingId, updatedDiagnosis);
         const updated = response.data;
-        setLocalDiagnoses(prev => 
-          prev.map(diag => diag._id === editingId ? updated : diag)
+        setLocalDiagnoses((prev) =>
+          prev.map((diag) => (diag._id === editingId ? updated : diag)),
         );
         onUpdate(editingId, updatedDiagnosis);
         setEditingId(null);
       } catch (error) {
-        console.error('Failed to update diagnosis:', error);
-        alert('更新诊断失败，请重试');
+        console.error("Failed to update diagnosis:", error);
+        alert("更新诊断失败，请重试");
       }
     }
   };
@@ -171,11 +171,11 @@ export function DiagnosisBlock({
         created_at: new Date(),
         updated_at: new Date(),
       };
-      
+
       try {
         const response = await diagnosesApi.create(newDiagnosis);
         const created = response.data;
-        setLocalDiagnoses(prev => [...prev, created]);
+        setLocalDiagnoses((prev) => [...prev, created]);
         onAdd(newDiagnosis);
         setAddForm({
           diagnosis_name: "",
@@ -187,8 +187,8 @@ export function DiagnosisBlock({
         });
         setIsAddModalOpen(false);
       } catch (error) {
-        console.error('Failed to create diagnosis:', error);
-        alert('创建诊断失败，请重试');
+        console.error("Failed to create diagnosis:", error);
+        alert("创建诊断失败，请重试");
       }
     }
   };
@@ -197,11 +197,11 @@ export function DiagnosisBlock({
     if (confirm("确定要删除这个诊断吗？")) {
       try {
         await diagnosesApi.delete(id);
-        setLocalDiagnoses(prev => prev.filter(diag => diag._id !== id));
+        setLocalDiagnoses((prev) => prev.filter((diag) => diag._id !== id));
         onDelete(id);
       } catch (error) {
-        console.error('Failed to delete diagnosis:', error);
-        alert('删除诊断失败，请重试');
+        console.error("Failed to delete diagnosis:", error);
+        alert("删除诊断失败，请重试");
       }
     }
   };

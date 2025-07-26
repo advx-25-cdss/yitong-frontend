@@ -57,9 +57,9 @@ export default function EHRSidebar({
             {collapsed ? <ChevronRight /> : <ChevronLeft />}
           </Button>
         </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center p-4">
-            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-2"></div>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="p-4 text-center">
+            <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
             <p className={`text-sm text-gray-500 ${collapsed ? "hidden" : ""}`}>
               Loading patient data...
             </p>

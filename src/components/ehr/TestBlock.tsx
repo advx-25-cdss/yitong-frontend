@@ -54,7 +54,9 @@ export function TestBlock({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [testImages, setTestImages] = useState<Record<string, TestImage>>({});
-  const [loadingResults, setLoadingResults] = useState<Record<string, boolean>>({});
+  const [loadingResults, setLoadingResults] = useState<Record<string, boolean>>(
+    {},
+  );
   const [loading, setLoading] = useState(false);
   const [localTests, setLocalTests] = useState<Test[]>([]);
 
@@ -76,13 +78,13 @@ export function TestBlock({
   useEffect(() => {
     const loadTests = async () => {
       if (!case_id) return;
-      
+
       setLoading(true);
       try {
         const response = await testsApi.getByCase(case_id);
         setLocalTests(response.data.data);
       } catch (error) {
-        console.error('Failed to load tests:', error);
+        console.error("Failed to load tests:", error);
       } finally {
         setLoading(false);
       }
@@ -111,18 +113,18 @@ export function TestBlock({
         results: filteredResults,
         test_date: new Date(editForm.test_date),
       };
-      
+
       try {
         const response = await testsApi.update(editingId, updateData);
         const updatedTest = response.data;
-        setLocalTests(prev => 
-          prev.map(test => test._id === editingId ? updatedTest : test)
+        setLocalTests((prev) =>
+          prev.map((test) => (test._id === editingId ? updatedTest : test)),
         );
         onUpdate(editingId, updateData);
         setEditingId(null);
       } catch (error) {
-        console.error('Failed to update test:', error);
-        alert('更新检查失败，请重试');
+        console.error("Failed to update test:", error);
+        alert("更新检查失败，请重试");
       }
     }
   };
@@ -152,11 +154,11 @@ export function TestBlock({
         created_at: new Date(),
         updated_at: new Date(),
       };
-      
+
       try {
         const response = await testsApi.create(newTest);
         const createdTest = response.data;
-        setLocalTests(prev => [...prev, createdTest]);
+        setLocalTests((prev) => [...prev, createdTest]);
         onAdd(newTest);
         setAddForm({
           test_name: "",
@@ -166,8 +168,8 @@ export function TestBlock({
         });
         setIsAddModalOpen(false);
       } catch (error) {
-        console.error('Failed to create test:', error);
-        alert('创建检查失败，请重试');
+        console.error("Failed to create test:", error);
+        alert("创建检查失败，请重试");
       }
     }
   };
@@ -176,7 +178,7 @@ export function TestBlock({
     if (confirm("确定要删除这个检查项目吗？")) {
       try {
         await testsApi.delete(id);
-        setLocalTests(prev => prev.filter(test => test._id !== id));
+        setLocalTests((prev) => prev.filter((test) => test._id !== id));
         onDelete(id);
         // Also remove associated image and loading state
         const newImages = { ...testImages };
@@ -186,8 +188,8 @@ export function TestBlock({
         setTestImages(newImages);
         setLoadingResults(newLoading);
       } catch (error) {
-        console.error('Failed to delete test:', error);
-        alert('删除检查失败，请重试');
+        console.error("Failed to delete test:", error);
+        alert("删除检查失败，请重试");
       }
     }
   };

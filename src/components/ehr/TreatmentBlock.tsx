@@ -103,7 +103,8 @@ export function TreatmentBlock({
   );
   const [loading, setLoading] = useState(false);
   const [localMedicines, setLocalMedicines] = useState<Medicine[]>(medicines);
-  const [localTreatments, setLocalTreatments] = useState<Treatment[]>(treatments);
+  const [localTreatments, setLocalTreatments] =
+    useState<Treatment[]>(treatments);
 
   // Medicine form state
   const [medicineForm, setMedicineForm] = useState<MedicineFormData>({
@@ -150,13 +151,13 @@ export function TreatmentBlock({
   useEffect(() => {
     const loadData = async () => {
       if (!case_id) return;
-      
+
       setLoading(true);
       try {
         const treatmentsResponse = await treatmentsApi.getByCase(case_id);
         setLocalTreatments(treatmentsResponse.data.data);
       } catch (error) {
-        console.error('Failed to load treatments data:', error);
+        console.error("Failed to load treatments data:", error);
       } finally {
         setLoading(false);
       }

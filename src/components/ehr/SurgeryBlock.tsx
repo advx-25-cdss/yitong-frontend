@@ -701,7 +701,6 @@ export function SurgeryBlock({
                             </p>
                           </div>
                         )}
-
                       </div>
                     </div>
                   </div>

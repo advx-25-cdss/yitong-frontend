@@ -16,7 +16,7 @@ The `TransformersAudioTranscriber` class provides real-time speech-to-text funct
 ✅ **Complete Audio Transcription**: Processes entire recording as one segment when stopped  
 ✅ **Speaker Detection**: Basic heuristic-based speaker identification  
 ✅ **Chinese Language Support**: Optimized for Chinese speech recognition  
-✅ **Automatic Fallback**: WebGPU → CPU if hardware acceleration unavailable  
+✅ **Automatic Fallback**: WebGPU → CPU if hardware acceleration unavailable
 
 ## File Structure
 
@@ -32,6 +32,7 @@ src/
 ## Configuration
 
 ### Next.js Configuration (next.config.js)
+
 - WebAssembly support for Transformers.js
 - Cross-origin headers for WebGPU
 - Webpack fallbacks for browser environment
@@ -39,11 +40,13 @@ src/
 ### Model Selection
 
 Current model: `Xenova/whisper-small`
+
 - **Size**: ~244MB download
 - **Languages**: Multilingual (Chinese, English, etc.)
 - **Accuracy**: Good balance of speed vs accuracy
 
 Alternative models you can use:
+
 - `Xenova/whisper-tiny`: Faster, smaller (~39MB), less accurate
 - `Xenova/whisper-base`: Larger (~142MB), more accurate
 - `Xenova/whisper-medium`: Even larger (~769MB), highest accuracy
@@ -52,20 +55,22 @@ To change the model, update the pipeline initialization in `transformersTranscri
 
 ```typescript
 this.transcriber = await pipeline(
-  'automatic-speech-recognition',
-  'Xenova/whisper-tiny', // <- Change this
-  { device: 'webgpu', dtype: 'fp32' }
+  "automatic-speech-recognition",
+  "Xenova/whisper-tiny", // <- Change this
+  { device: "webgpu", dtype: "fp32" },
 );
 ```
 
 ## Performance Considerations
 
 ### First Load
+
 - Initial model download (~244MB for whisper-small)
 - Model initialization time (~10-30 seconds)
 - Cached for subsequent usage
 
 ### Runtime
+
 - **WebGPU**: Fast processing of complete audio
 - **CPU**: Slower but still usable for complete transcription
 - **Memory**: ~500MB-1GB during transcription processing
@@ -81,6 +86,7 @@ The current implementation uses simple keyword-based heuristics:
 ```
 
 **Improvements possible:**
+
 - Voice activity detection (VAD)
 - Speaker embedding models
 - Machine learning-based speaker diarization
@@ -109,11 +115,13 @@ transcriber.stopTranscription(); // This triggers transcription
 ## Browser Compatibility
 
 ### Required Features
+
 - **WebRTC** (MediaDevices.getUserMedia): All modern browsers
-- **WebAssembly**: All modern browsers  
+- **WebAssembly**: All modern browsers
 - **WebGPU** (optional): Chrome 113+, Edge 113+
 
 ### Fallback Strategy
+
 1. Try WebGPU acceleration
 2. Fall back to CPU processing
 3. Display clear error messages if unsupported
@@ -122,7 +130,7 @@ transcriber.stopTranscription(); // This triggers transcription
 
 ✅ **Privacy-First**: All audio processing happens locally  
 ✅ **No Data Upload**: Audio never leaves the user's device  
-✅ **HTTPS Required**: Secure context needed for microphone access  
+✅ **HTTPS Required**: Secure context needed for microphone access
 
 ## Troubleshooting
 
@@ -148,6 +156,7 @@ transcriber.stopTranscription(); // This triggers transcription
 ### Debug Logs
 
 Check browser console for detailed logging:
+
 - Model initialization status
 - Audio processing pipeline
 - Transcription results

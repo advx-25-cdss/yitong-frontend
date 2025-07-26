@@ -73,7 +73,9 @@ export function HospitalizationBlock({
 }: HospitalizationBlockProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [localHospitalizations, setLocalHospitalizations] = useState<Hospitalization[]>([]);
+  const [localHospitalizations, setLocalHospitalizations] = useState<
+    Hospitalization[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [editForm, setEditForm] = useState<HospitalizationFormData>({
     admission_date: "",
@@ -98,25 +100,24 @@ export function HospitalizationBlock({
     notes: "",
   });
 
+  // Load tests for this case
+  useEffect(() => {
+    const loadTests = async () => {
+      if (!case_id) return;
 
-    // Load tests for this case
-    useEffect(() => {
-      const loadTests = async () => {
-        if (!case_id) return;
-        
-        setLoading(true);
-        try {
-          // const response = await hospitalizationApi.getByCase(case_id);
-          // setLocalHospitalizations(response.data.data);
-        } catch (error) {
-          console.error('Failed to load hospitalizations:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-      loadTests();
-    }, [case_id]);
+      setLoading(true);
+      try {
+        // const response = await hospitalizationApi.getByCase(case_id);
+        // setLocalHospitalizations(response.data.data);
+      } catch (error) {
+        console.error("Failed to load hospitalizations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTests();
+  }, [case_id]);
 
   const handleEdit = (hospitalization: Hospitalization) => {
     setEditingId(hospitalization._id);
