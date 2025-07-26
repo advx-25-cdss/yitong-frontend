@@ -21,7 +21,7 @@ import type {
 
 // Configure axios instance
 const api = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "https://gensyncapi.7086cmd.me",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
