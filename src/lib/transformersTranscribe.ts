@@ -6,7 +6,7 @@ import {
   getModelConfig,
   validateBrowserSupport,
 } from "./transcriptionConfig";
-
+import { cdssApi } from "./api";
 export interface TranscriptionSegment {
   id: string;
   speaker: "doctor" | "patient";
@@ -29,10 +29,12 @@ export class TransformersAudioTranscriber {
   private segmentIdCounter = 0;
   private recordingStartTime = 0;
   private config: TranscriberConfig;
+  private caseId: string | null = null; // Static case ID for all instances
 
-  constructor(config: Partial<TranscriberConfig> = {}) {
+  constructor(caseId: string, config: Partial<TranscriberConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.initializeTranscriber();
+    this.caseId = caseId; // Store case ID for later use
   }
 
   private async initializeTranscriber() {
@@ -130,6 +132,12 @@ export class TransformersAudioTranscriber {
           startTime: 0,
           endTime: totalDuration,
         };
+
+        console.log(this.caseId)
+
+        await cdssApi.saveTranscription(this.caseId ?? '', {
+          text: completeSegment.text,
+        });
 
         // Replace all segments with the complete transcription
         this.currentSegments = [completeSegment];

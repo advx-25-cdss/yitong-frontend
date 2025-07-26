@@ -13,6 +13,10 @@ import type {
   Treatment,
   Patient,
   ApiListResponse,
+  ConversationResponse,
+  ConversationDetails,
+  ClinicalRecommendations,
+  TranscriptionSaveRequest,
 } from "~/types";
 
 // Configure axios instance
@@ -506,6 +510,32 @@ export const patientApi = {
       throw error;
     }
   },
+};
+
+// CDSS API - Clinical Decision Support System APIs
+export const cdssApi = {
+  // Dialogue Management
+  initiateDialogue: (caseId: string) =>
+    api.post<ConversationResponse>(`/api/intelligence/dialog/cases/${caseId}/initiation`),
+
+  continueDialogue: (conversationId: string, userInput: string) =>
+    api.post<ConversationResponse>(`/api/intelligence/dialog/dialogues/${conversationId}/continuation`, {
+      user_input: userInput,
+    }),
+
+  getDialogue: (conversationId: string) =>
+    api.get<ConversationDetails>(`/api/intelligence/dialog/dialogues/${conversationId}`),
+
+  // Clinical Recommendations
+  getRecommendedTests: (caseId: string) =>
+    api.post<Test[]>(`/api/intelligence/recommendation/${caseId}/tests`),
+
+  getRecommendedTreatments: (caseId: string) =>
+    api.post<ClinicalRecommendations>(`/api/intelligence/recommendation/${caseId}/treatments`),
+
+  // Transcription Management
+  saveTranscription: (caseId: string, data: TranscriptionSaveRequest) =>
+    api.post<{ message: string }>(`/api/intelligence/transcription/${caseId}/incremental`, data),
 };
 
 // Export the axios instance for custom requests

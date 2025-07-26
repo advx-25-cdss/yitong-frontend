@@ -6,7 +6,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "~/components/ui/resizable";
-import { getPatientById } from "~/lib/dataService";
+import { casesApi, getPatientById } from "~/lib/dataService";
 import EHRSidebar from "~/components/EHRSidebar";
 import TranscriptionArea from "~/components/TranscriptionArea";
 import ChatInterface from "~/components/ChatInterface";
@@ -25,6 +25,7 @@ export default function CDSSScreen(params: { patientId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const sidebarPanelRef = useRef<ImperativePanelHandle>(null);
+  const [caseId, setCaseId] = useState<string>("");
 
   // Fetch specific patient data when selectedPatientId changes
   useEffect(() => {
@@ -34,6 +35,10 @@ export default function CDSSScreen(params: { patientId: string }) {
         setLoading(true);
         const patientData = await getPatientById(selectedPatientId);
         setSelectedPatient(patientData);
+        const cases = (await casesApi.getByPatient(selectedPatientId)).data.data;
+        if (cases.length > 0) {
+          setCaseId(cases?.[0]?._id ?? ''); // Use the first case ID for the
+        }
         setError(null);
       } catch (err) {
         console.error("Failed to fetch patient:", err);
@@ -146,6 +151,7 @@ export default function CDSSScreen(params: { patientId: string }) {
               onMouseLeave={() => setTranscriptionExpanded(false)}
             >
               <TranscriptionArea
+                caseId={caseId}
                 patient={selectedPatient}
                 isTranscribing={isTranscribing}
                 onStartTranscription={() => setIsTranscribing(true)}
@@ -160,6 +166,7 @@ export default function CDSSScreen(params: { patientId: string }) {
             >
               <ChatInterface
                 patient={selectedPatient}
+                caseId={caseId}
                 onPatientSelect={setSelectedPatientId}
               />
             </div>

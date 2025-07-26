@@ -18,6 +18,7 @@ import {
   Heart,
 } from "lucide-react";
 import type { Patient } from "~/types";
+import { cdssApi } from "~/lib/api";
 
 interface ChatMessage {
   id: string;
@@ -31,43 +32,49 @@ interface ChatMessage {
 interface ChatInterfaceProps {
   patient: Patient | null;
   onPatientSelect: (patientId: string) => void;
+  caseId: string; // Case ID for the current chat session
 }
 
 export default function ChatInterface({
   patient,
   onPatientSelect,
+  caseId
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [selectedMode, setSelectedMode] = useState("诊断分析");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [conversationId, setConversationId] = useState<string>("");
+  const [disabled, setDisabled] = useState(true);
 
   // Initialize messages when patient data is loaded
   useEffect(() => {
     if (patient) {
-      setMessages([
-        {
-          id: "1",
-          type: "system",
-          content: `已加载患者 ${patient.demographics.last_name}${patient.demographics.first_name} 的病历信息。我可以协助您进行临床决策分析。`,
-          timestamp: new Date(),
-        },
-        {
-          id: "2",
-          type: "ai",
-          content: "基于患者的症状和检查结果，我建议考虑以下诊断和检查：",
-          timestamp: new Date(),
-          suggestions: [
-            "建议心电图检查",
-            "考虑冠心病可能",
-            "评估心血管风险因素",
-            "建议血脂检查",
-          ],
-        },
-      ]);
+      setMessages([]);
     }
   }, [patient]);
+
+  async function startConversation() {
+    if (!caseId) {
+      return
+    }
+    try {
+      const response = await cdssApi.initiateDialogue(caseId);
+      setConversationId(response.data.conversation_id);
+      setMessages([{
+        id: Date.now().toString(),
+        type: "ai",
+        content: response.data.summary ?? '<AI response>',
+        timestamp: new Date(),
+        priority: 'medium',
+      }])
+      console.log("Conversation started with ID:", response.data.conversation_id);
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+      throw new Error("Failed to start conversation");
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -91,82 +98,22 @@ export default function ChatInterface({
     setNewMessage("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(newMessage, patient);
-      setMessages((prev) => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1500);
+    const aiResponse = await generateAIResponse(newMessage);
+    setMessages((prev) => [...prev, aiResponse]);
+    setIsTyping(false);
   };
 
-  const generateAIResponse = (
+  const generateAIResponse = async (
     userInput: string,
-    patient: Patient,
-  ): ChatMessage => {
-    const lowerInput = userInput.toLowerCase();
-
-    if (lowerInput.includes("诊断") || lowerInput.includes("分析")) {
+  ): Promise<ChatMessage> => {
+      const req = await cdssApi.continueDialogue(conversationId, userInput);
       return {
-        id: (Date.now() + 1).toString(),
+        id: Date.now().toString(),
         type: "ai",
-        content: `基于患者${patient.demographics.last_name}${patient.demographics.first_name}的临床表现：${patient.historyPresentIllness?.chief_complaint}，结合生命体征异常（血压${patient.vitals[0]?.blood_pressure_systolic}/${patient.vitals[0]?.blood_pressure_diastolic}mmHg），建议考虑以下诊断：\n\n1. **${patient.diagnoses[0]?.diagnosis_name}** (概率: ${patient.diagnoses[0]?.probability}%)\n   - 症状符合度高\n   - 需要进一步检查确认\n\n2. 高血压病\n   - 血压持续升高\n   - 需要评估靶器官损害`,
+        content: req.data.summary ?? '<AI response>',
         timestamp: new Date(),
-        suggestions: [
-          "建议完善心电图",
-          "考虑超声心动图",
-          "评估肾功能",
-          "制定治疗方案",
-        ],
-        priority: "high",
-      };
-    }
-
-    if (lowerInput.includes("治疗") || lowerInput.includes("用药")) {
-      return {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: `针对患者目前的诊断，建议以下治疗方案：\n\n**药物治疗：**\n• ${patient.medicines[0]?.medicine_name} ${patient.medicines[0]?.dosage} ${patient.medicines[0]?.frequency}\n• 监测血压变化\n\n**生活方式干预：**\n• 低盐饮食（<6g/天）\n• 适量运动\n• 戒烟限酒\n• 体重控制\n\n**随访计划：**\n• 1周后复查血压\n• 1个月后评估治疗效果`,
-        timestamp: new Date(),
-        suggestions: [
-          "查看药物相互作用",
-          "评估肝肾功能",
-          "制定随访计划",
-          "患者教育指导",
-        ],
-        priority: "medium",
-      };
-    }
-
-    if (lowerInput.includes("检查") || lowerInput.includes("化验")) {
-      return {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: `基于当前临床情况，建议完善以下检查：\n\n**必要检查：**\n• 心电图 - 评估心律和缺血改变\n• 胸片 - 排除肺部疾病\n• 血常规、生化全套\n• 甲状腺功能\n\n**可选检查：**\n• 超声心动图 - 评估心脏结构功能\n• 24小时动态血压监测\n• 运动负荷试验\n\n**已完成检查结果：**\n• ${patient.tests[0]?.test_name}: ${patient.tests[0]?.results?.join(", ")}`,
-        timestamp: new Date(),
-        suggestions: [
-          "解读检查结果",
-          "安排进一步检查",
-          "评估风险分层",
-          "制定监测计划",
-        ],
-        priority: "medium",
-      };
-    }
-
-    // Default response
-    return {
-      id: (Date.now() + 1).toString(),
-      type: "ai",
-      content:
-        "我理解您的问题。让我分析一下患者的情况并为您提供临床建议。您可以询问关于诊断、治疗、用药或检查的任何问题。",
-      timestamp: new Date(),
-      suggestions: [
-        "分析诊断可能性",
-        "推荐治疗方案",
-        "建议检查项目",
-        "评估预后风险",
-      ],
-    };
+        priority: 'medium',
+      }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -299,7 +246,7 @@ export default function ChatInterface({
                                 {message.content}
                               </p>
                               <p className="mt-1 text-xs opacity-70">
-                                {message.timestamp.toLocaleTimeString("zh-CN", {
+                                {message.timestamp?.toLocaleTimeString?.("zh-CN", {
                                   hour: "2-digit",
                                   minute: "2-digit",
                                 })}
@@ -370,56 +317,8 @@ export default function ChatInterface({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedMode("诊断分析")}
-                    className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
-                      selectedMode === "诊断分析"
-                        ? "cursor-default bg-gray-800 text-white"
-                        : "cursor-pointer bg-transparent text-gray-600"
-                    }`}
-                    tabIndex={selectedMode === "诊断分析" ? -1 : 0}
-                    style={
-                      selectedMode === "诊断分析"
-                        ? { pointerEvents: "none" }
-                        : {}
-                    }
-                  >
-                    <Stethoscope className="h-3 w-3" />
-                    <span>诊断分析</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedMode("治疗建议")}
-                    className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
-                      selectedMode === "治疗建议"
-                        ? "cursor-default bg-gray-800 text-white"
-                        : "cursor-pointer bg-transparent text-gray-600"
-                    }`}
-                    tabIndex={selectedMode === "治疗建议" ? -1 : 0}
-                    style={
-                      selectedMode === "治疗建议"
-                        ? { pointerEvents: "none" }
-                        : {}
-                    }
-                  >
-                    <Pill className="h-3 w-3" />
-                    <span>治疗建议</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedMode("检查建议")}
-                    className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
-                      selectedMode === "检查建议"
-                        ? "cursor-default bg-gray-800 text-white"
-                        : "cursor-pointer bg-transparent text-gray-600"
-                    }`}
-                    tabIndex={selectedMode === "检查建议" ? -1 : 0}
-                    style={
-                      selectedMode === "检查建议"
-                        ? { pointerEvents: "none" }
-                        : {}
-                    }
+                    onClick={() => cdssApi.getRecommendedTests(caseId)}
+                    className={`flex h-7 items-center space-x-1 px-2 text-xs select-none cursor-pointer bg-transparent text-gray-600`}
                   >
                     <TestTube className="h-3 w-3" />
                     <span>检查建议</span>
@@ -427,18 +326,30 @@ export default function ChatInterface({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedMode("风险评估")}
+                    onClick={() => setSelectedMode("诊断分析")}
                     className={`flex h-7 items-center space-x-1 px-2 text-xs select-none ${
-                      selectedMode === "风险评估"
+                      conversationId
                         ? "cursor-default bg-gray-800 text-white"
                         : "cursor-pointer bg-transparent text-gray-600"
                     }`}
-                    tabIndex={selectedMode === "风险评估" ? -1 : 0}
-                    style={
-                      selectedMode === "风险评估"
-                        ? { pointerEvents: "none" }
-                        : {}
-                    }
+                  >
+                    <Stethoscope className="h-3 w-3" />
+                    <span>诊断分析</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => cdssApi.getRecommendedTreatments(caseId)}
+                    className={`flex h-7 items-center space-x-1 px-2 text-xs select-none cursor-pointer bg-transparent text-gray-600`}
+                  >
+                    <Pill className="h-3 w-3" />
+                    <span>治疗建议</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedMode("风险评估")}
+                    className={`flex h-7 items-center space-x-1 px-2 text-xs select-none cursor-pointer bg-transparent text-gray-600`}
                   >
                     <Heart className="h-3 w-3" />
                     <span>风险评估</span>

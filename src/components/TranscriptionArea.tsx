@@ -10,6 +10,7 @@ import {
   TransformersAudioTranscriber,
   type TranscriptionSegment,
 } from "~/lib/transformersTranscribe";
+import { CDSSService } from "~/lib/cdssService";
 import { AudioRecorder, useAudioRecorder } from "react-audio-voice-recorder";
 
 // Types
@@ -20,13 +21,16 @@ interface TranscriptionAreaProps {
   onStartTranscription: () => void;
   onStopTranscription: () => void;
   expanded: boolean;
+  caseId?: string; // Add caseId prop for API integration
 }
 
 // Custom hook for audio recording
-function useAudioRecording() {
+function useAudioRecording(caseId?: string) {
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [transcriber] = useState(() => new TransformersAudioTranscriber());
+  const [transcriber] = useState(() => new TransformersAudioTranscriber(caseId ?? ''));
+  const [lastSavedText, setLastSavedText] = useState("");
+  const [currentSegments, setCurrentSegments] = useState<TranscriptionSegment[]>([]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
@@ -46,10 +50,55 @@ function useAudioRecording() {
     };
   }, [isRecording]);
 
+  // Auto-save transcription every 30 seconds when recording
+  useEffect(() => {
+    let saveIntervalId: NodeJS.Timeout | null = null;
+
+    if (isRecording && caseId && currentSegments.length > 0) {
+      saveIntervalId = setInterval(async () => {
+        const currentText = currentSegments
+          .map((segment: TranscriptionSegment) => `${segment.speaker}: ${segment.text}`)
+          .join("\n");
+
+        if (currentText && currentText !== lastSavedText) {
+          try {
+            await CDSSService.saveTranscription(caseId, currentText);
+            setLastSavedText(currentText);
+            console.log("Transcription auto-saved successfully");
+          } catch (error) {
+            console.error("Failed to auto-save transcription:", error);
+          }
+        }
+      }, 30000); // Save every 30 seconds
+    }
+
+    return () => {
+      if (saveIntervalId) {
+        clearInterval(saveIntervalId);
+      }
+    };
+  }, [isRecording, caseId, lastSavedText, currentSegments]);
+
   async function toggleRecording() {
     if (isRecording) {
       transcriber.stopTranscription();
       setIsRecording(false);
+
+      // Save final transcription when stopping
+      if (caseId && currentSegments.length > 0) {
+        const finalText = currentSegments
+          .map((segment: TranscriptionSegment) => `${segment.speaker}: ${segment.text}`)
+          .join("\n");
+
+        if (finalText) {
+          try {
+            await CDSSService.saveTranscription(caseId, finalText);
+            console.log("Final transcription saved successfully");
+          } catch (error) {
+            console.error("Failed to save final transcription:", error);
+          }
+        }
+      }
     } else {
       await transcriber.startTranscription();
       setIsRecording(true);
@@ -61,6 +110,8 @@ function useAudioRecording() {
     duration,
     toggleRecording,
     transcriber,
+    segments: currentSegments,
+    setSegments: setCurrentSegments,
   };
 }
 
@@ -198,42 +249,21 @@ function TranscriptionDisplay({
           {segments.map((segment) => (
             <div
               key={segment.id}
-              className={`flex items-start space-x-3 rounded-lg p-3 ${
-                segment.speaker === "doctor" ? "bg-green-50" : "bg-blue-50"
-              }`}
+              className={`flex items-start space-x-3 rounded-lg p-3 bg-green-50`}
             >
               <div
-                className={`mt-2 h-2 w-2 rounded-full ${
-                  segment.speaker === "doctor" ? "bg-green-500" : "bg-blue-500"
-                }`}
+                className={`mt-2 h-2 w-2 rounded-full bg-green-500"`}
               ></div>
               <div className="flex-1">
                 <div className="mb-1 flex items-center space-x-2">
                   <span
-                    className={`font-medium ${
-                      segment.speaker === "doctor"
-                        ? "text-green-900"
-                        : "text-blue-900"
-                    }`}
-                  >
-                    {segment.speaker === "doctor" ? "医生" : "患者"}
-                  </span>
-                  <span
-                    className={`text-xs ${
-                      segment.speaker === "doctor"
-                        ? "text-green-600"
-                        : "text-blue-600"
-                    }`}
+                    className={`text-xs text-green-600`}
                   >
                     {segment.timestamp}
                   </span>
                 </div>
                 <p
-                  className={`text-sm ${
-                    segment.speaker === "doctor"
-                      ? "text-green-800"
-                      : "text-blue-800"
-                  }`}
+                  className={`text-sm text-green-800`}
                 >
                   {segment.text}
                   {isRecording && segment === segments[segments.length - 1] && (
@@ -264,24 +294,26 @@ export default function TranscriptionArea({
   patient,
   isTranscribing,
   expanded,
+  caseId,
 }: TranscriptionAreaProps) {
   const [transcriptionSegments, setTranscriptionSegments] = useState<
     TranscriptionSegment[]
   >([]);
-  const { isRecording, duration, toggleRecording, transcriber } =
-    useAudioRecording();
+  const { isRecording, duration, toggleRecording, transcriber, segments, setSegments } =
+    useAudioRecording(caseId);
 
   // Set up real-time transcription updates
   useEffect(() => {
     transcriber.setOnTranscriptionUpdate((segments) => {
       setTranscriptionSegments(segments);
+      setSegments(segments); // Update segments in the hook for auto-saving
     });
 
     // Cleanup on unmount
     return () => {
       transcriber.terminate();
     };
-  }, [transcriber]);
+  }, [transcriber, setSegments]);
 
   const hasContent = transcriptionSegments.length > 0;
 

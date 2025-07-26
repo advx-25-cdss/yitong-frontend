@@ -218,3 +218,35 @@ export interface ApiSearchResponse<T> {
   skip: number;
   limit: number;
 }
+
+// CDSS API Types
+export interface ConversationResponse {
+  conversation_id: string;
+  summary?: string;
+  response?: string;
+}
+
+export interface ConversationDetails {
+  conversation_id: string;
+  details: {
+    _id: string;
+    case_id: string;
+    conversation: Array<{
+      role: string;
+      content: string;
+      timestamp: string;
+    }>;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+export interface ClinicalRecommendations {
+  diagnosis: Diagnosis;
+  medications: Medicine[];
+  treatments: Treatment[];
+}
+
+export interface TranscriptionSaveRequest {
+  text: string;
+}
