@@ -30,7 +30,7 @@ export const demographicsApi = {
     api.post<Demographics>('/api/ehr/demographics/', data),
   
   getAll: () =>
-    api.get<ApiListResponse<Demographics>>('/api/ehr/demographics/'),
+    api.get<Array<Demographics>>('/api/ehr/demographics/'),
   
   getById: (recordId: string) =>
     api.get<Demographics>(`/api/ehr/demographics/${recordId}`),
@@ -168,7 +168,7 @@ export const casesApi = {
     api.delete<never>(`/api/diagnosis/cases/${caseId}`),
   
   getByPatient: (patientId: string) =>
-    api.get<Array<Case>>(`/api/diagnosis/cases/patient/${patientId}`),
+    api.get<{data: Array<Case>}>(`/api/diagnosis/cases/patient/${patientId}`),
   
   updateStatus: (caseId: string, status: Case['status']) =>
     api.patch<Case>(`/api/diagnosis/cases/${caseId}/status`, { status }),
@@ -195,7 +195,7 @@ export const testsApi = {
     api.delete<never>(`/api/diagnosis/tests/${testId}`),
   
   getByPatient: (patientId: string) =>
-    api.get<Array<Test>>(`/api/diagnosis/tests/patient/${patientId}`),
+    api.get<{data: Array<Test>}>(`/api/diagnosis/tests/patient/${patientId}`),
   
   getByCase: (caseId: string) =>
     api.get<ApiListResponse<Test>>(`/api/diagnosis/tests/case/${caseId}`),
@@ -230,8 +230,8 @@ export const medicinesApi = {
     api.delete<never>(`/api/diagnosis/medicines/${medicineId}`),
   
   getByPatient: (patientId: string) =>
-    api.get<Array<Medicine>>(`/api/diagnosis/medicines/patient/${patientId}`),
-  
+    api.get<{data: Array<Medicine>}>(`/api/diagnosis/medicines/patient/${patientId}`),
+
   getByCase: (caseId: string) =>
     api.get<ApiListResponse<Medicine>>(`/api/diagnosis/medicines/case/${caseId}`),
   
@@ -275,8 +275,8 @@ export const treatmentsApi = {
     api.delete<never>(`/api/diagnosis/treatments/${treatmentId}`),
   
   getByPatient: (patientId: string) =>
-    api.get<Array<Treatment>>(`/api/diagnosis/treatments/patient/${patientId}`),
-  
+    api.get<{data: Array<Treatment>}>(`/api/diagnosis/treatments/patient/${patientId}`),
+
   getByCase: (caseId: string) =>
     api.get<ApiListResponse<Treatment>>(`/api/diagnosis/treatments/case/${caseId}`),
   
@@ -308,7 +308,7 @@ export const diagnosesApi = {
     api.delete<never>(`/api/diagnosis/diagnoses/${diagnosisId}`),
   
   getByPatient: (patientId: string) =>
-    api.get<Array<Diagnosis>>(`/api/diagnosis/diagnoses/patient/${patientId}`),
+    api.get<{data: Array<Diagnosis>}>(`/api/diagnosis/diagnoses/patient/${patientId}`),
   
   getByCase: (caseId: string) =>
     api.get<ApiListResponse<Diagnosis>>(`/api/diagnosis/diagnoses/case/${caseId}`),

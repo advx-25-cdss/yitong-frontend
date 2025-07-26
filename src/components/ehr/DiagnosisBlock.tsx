@@ -28,7 +28,6 @@ import { diagnosesApi } from "~/lib/api";
 
 interface DiagnosisBlockProps {
   case_id: string;
-  diagnoses: Diagnosis[];
   onAdd: (diagnosis: Omit<Diagnosis, "_id">) => void;
   onUpdate: (id: string, diagnosis: Partial<Diagnosis>) => void;
   onDelete: (id: string) => void;
@@ -57,7 +56,6 @@ const statusColors = {
 
 export function DiagnosisBlock({
   case_id,
-  diagnoses,
   onAdd,
   onUpdate,
   onDelete,
@@ -168,6 +166,7 @@ export function DiagnosisBlock({
         notes: addForm.notes,
         additional_info: addForm.additional_info,
         case_id: case_id,
+        probability: 0.0, // Default probability
         patient_id: "", // This should be provided by the parent component
         created_at: new Date(),
         updated_at: new Date(),

@@ -26,7 +26,7 @@ export const getPatientsList = async (): Promise<Demographics[]> => {
 export const getPatientDemographics = async (patientId: string): Promise<Demographics | null> => {
   try {
     const response = await demographicsApi.getByPatient(patientId);
-    return response.data;
+    return response.data as any;
   } catch (error) {
     console.error(`Failed to fetch demographics for patient ${patientId}:`, error);
     return null;
@@ -48,7 +48,7 @@ export const getPatientVitals = async (patientId: string): Promise<VitalSigns[]>
 export const getPatientCases = async (patientId: string): Promise<Case[]> => {
   try {
     const response = await casesApi.getByPatient(patientId);
-    return response.data;
+    return response.data as any;
   } catch (error) {
     console.error(`Failed to fetch cases for patient ${patientId}:`, error);
     return [];
@@ -59,7 +59,7 @@ export const getPatientCases = async (patientId: string): Promise<Case[]> => {
 export const getPatientTests = async (patientId: string): Promise<Test[]> => {
   try {
     const response = await testsApi.getByPatient(patientId);
-    return response.data;
+    return response.data as any;
   } catch (error) {
     console.error(`Failed to fetch tests for patient ${patientId}:`, error);
     return [];
@@ -70,7 +70,7 @@ export const getPatientTests = async (patientId: string): Promise<Test[]> => {
 export const getPatientMedicines = async (patientId: string): Promise<Medicine[]> => {
   try {
     const response = await medicinesApi.getByPatient(patientId);
-    return response.data;
+    return response.data as any;
   } catch (error) {
     console.error(`Failed to fetch medicines for patient ${patientId}:`, error);
     return [];
@@ -81,7 +81,7 @@ export const getPatientMedicines = async (patientId: string): Promise<Medicine[]
 export const getPatientDiagnoses = async (patientId: string): Promise<Diagnosis[]> => {
   try {
     const response = await diagnosesApi.getByPatient(patientId);
-    return response.data;
+    return response.data as any;
   } catch (error) {
     console.error(`Failed to fetch diagnoses for patient ${patientId}:`, error);
     return [];
@@ -92,7 +92,7 @@ export const getPatientDiagnoses = async (patientId: string): Promise<Diagnosis[
 export const getPatientTreatments = async (patientId: string): Promise<Treatment[]> => {
   try {
     const response = await treatmentsApi.getByPatient(patientId);
-    return response.data;
+    return response.data as any;
   } catch (error) {
     console.error(`Failed to fetch treatments for patient ${patientId}:`, error);
     return [];

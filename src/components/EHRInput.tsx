@@ -76,7 +76,7 @@ interface WorkflowStep {
 export default function EHRInput({ patient }: EHRInputProps) {
   const [activeSection, setActiveSection] = useState("overview");
   const [workflowStep, setWorkflowStep] = useState(0);
-  const [caseId, setCaseId] = useState<string | null>(patient?.cases[0]?._id || '');
+  const [caseId, setCaseId] = useState<string>((patient?.cases[0]?._id || '') ?? '');
 
   // State for managing component data
   const [medicines, setMedicines] = useState<Medicine[]>(
@@ -674,6 +674,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
             className="bg-green-25/30 space-y-4 border-t p-4"
           >
             <TreatmentBlock
+              case_id={caseId}
               medicines={medicines}
               treatments={treatments}
               onAddMedicine={handleAddMedicine}
@@ -704,6 +705,7 @@ export default function EHRInput({ patient }: EHRInputProps) {
             className="bg-orange-25/30 space-y-4 border-t p-4"
           >
             <SurgeryBlock
+              surgeries={[]}
               case_id={caseId}
               onAdd={handleAddSurgery}
               onUpdate={handleUpdateSurgery}
